@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#121212"
+    tools:context=".Activity.PhanHoiActivity">
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/backapp">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="10dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <ImageView
+                    android:layout_marginLeft="10dp"
+                    android:id="@+id/imgBack"
+                    android:src="@drawable/baseline_arrow_back_ios_24"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"/>
+                <TextView
+                    android:text="Phản hồi và góp ý"
+                    android:gravity="center_vertical"
+                    android:layout_marginLeft="60dp"
+                    android:textSize="10pt"
+                    android:textStyle="bold"
+                    android:textColor="#ffffff"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"/>
+            </LinearLayout>
+            <TextView
+                android:layout_marginTop="5dp"
+                android:text="Đến:"
+                android:textColor="#ffffff"
+                android:textSize="7pt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+            <EditText
+                android:id="@+id/edtEmailTo"
+                android:textColorHint="#CCC7C7"
+                android:hint="Nhập địa chỉ email người nhận"
+                android:layout_width="match_parent"
+                android:textColor="#ffffff"
+                android:layout_height="wrap_content"/>
+            <TextView
+                android:text="Chủ đề:"
+                android:textColor="#ffffff"
+                android:textSize="7pt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+            <EditText
+                android:id="@+id/edtSubject"
+                android:hint="Tiêu đề thư"
+                android:textColorHint="#CCC7C7"
+                android:textColor="#ffffff"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+            <TextView
+                android:text="Nội dung:"
+                android:textColor="#ffffff"
+                android:textSize="7pt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+            <EditText
+                android:id="@+id/edtContent"
+                android:hint="Nội dung thư"
+                android:textColorHint="#CCC7C7"
+                android:textColor="#ffffff"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:gravity="top"/>
+            <Button
+                android:id="@+id/btnSend"
+                android:text="Gửi phản hồi"
+                android:textSize="8pt"
+                android:layout_gravity="center_horizontal"
+                android:backgroundTint="#7C7979"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+            <TextView
+                android:textColor="#ffffff"
+                android:text="Có thể gửi đến email: \n   duongnvt2k5@gmail.com"
+                android:textSize="8pt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>

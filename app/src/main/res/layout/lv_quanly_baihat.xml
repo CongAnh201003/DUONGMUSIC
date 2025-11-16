@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:background="#47000000"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="10dp">
+        <ImageView
+            android:id="@+id/imgQLAnhBaiHat"
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:layout_marginLeft="15dp"
+            android:src="@drawable/dgtrr" />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="1"
+            android:layout_marginLeft="20dp"
+            android:padding="5dp">
+            <TextView
+                android:id="@+id/tvQLTenBaiHat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="15dp"
+                android:textColor="#FFFFFF"
+                android:text="Tên bài hát" />
+            <TextView
+                android:id="@+id/tvQLTenCaSi"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#B6A6A6"
+                android:textSize="12dp"
+                android:text="Ca sĩ" />
+
+
+        </LinearLayout>
+        <ImageView
+            android:id="@+id/imgXoaBaiHat"
+            android:layout_gravity="center"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/baseline_delete_24" />
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

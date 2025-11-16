@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "87146986634",
+    "project_id": "duongmusic-7b88e",
+    "storage_bucket": "duongmusic-7b88e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:87146986634:android:5154a55fe8dddcfc558173",
+        "android_client_info": {
+          "package_name": "com.example.baicuoiky_nhom13"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBUdTlwLp4pRwG6EINRcfMpDddtGkT4ohk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

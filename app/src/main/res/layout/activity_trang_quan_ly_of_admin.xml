@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/backapp"
+    tools:context=".Activity.TrangQuanLyOfAdminActivity">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:gravity="center_horizontal">
+        <TextView
+            android:id="@+id/tvTenAdmin"
+            android:text="Xin chào, Tên admin"
+            android:textColor="#ffffff"
+            android:gravity="center_vertical"
+            android:textSize="9pt"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"/>
+        <ImageView
+            android:id="@+id/imgQuanLyNhac"
+            android:src="@drawable/logo"
+            android:layout_marginTop="10dp"
+            android:layout_width="150dp"
+            android:layout_height="150dp"/>
+        <TextView
+            android:textAlignment="center"
+            android:textSize="9pt"
+            android:textStyle="bold"
+            android:text="Quản lý bài hát"
+            android:textColor="#ffffff"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"/>
+        <ImageView
+            android:id="@+id/imgQuanLyUser"
+            android:src="@drawable/qlng"
+            android:layout_marginTop="10dp"
+            android:layout_width="120dp"
+            android:layout_height="120dp"/>
+        <TextView
+
+            android:textAlignment="center"
+            android:textSize="9pt"
+            android:textStyle="bold"
+            android:text="Quản lý ngươi dùng"
+            android:textColor="#ffffff"
+            android:layout_marginTop="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"/>
+        <Button
+            android:id="@+id/btnTrangProfileAdmin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Đến trang cá nhân của tôi"
+            android:textColor="#FFFFFF"
+            android:textSize="8pt"
+            android:backgroundTint="#333333"
+            app:cornerRadius="50dp" />
+
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

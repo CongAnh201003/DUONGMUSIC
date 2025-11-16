@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#121212"
+    tools:context=".Activity.AddUserActivity">
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp">
+        <ImageView
+            android:id="@+id/imgBack"
+            android:src="@drawable/baseline_arrow_back_ios_24"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginBottom="5dp"/>
+
+        <TextView
+            android:text="Thêm người dùng"
+            android:textSize="10pt"
+            android:background="#7C7979"
+            android:textStyle="bold"
+            android:textAlignment="center"
+            android:gravity="center_vertical"
+            android:textColor="#ffffff"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"/>
+        <TextView
+            android:textColor="#2846EF"
+            android:text="Tên đăng nhập:"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <EditText
+            android:id="@+id/edtTenDangNhap"
+            android:layout_width="match_parent"
+            android:textColor="#ffffff"
+            android:layout_height="wrap_content"
+            android:textColorHint="#CCC7C7"
+            android:hint="Tên đăng nhập" />
+        <TextView
+            android:textColor="#2846EF"
+            android:text="Mật khẩu:"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <EditText
+            android:id="@+id/edtMatKhau"
+            android:textColor="#ffffff"
+            android:textColorHint="#CCC7C7"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Mật khẩu"
+            android:inputType="textPassword" />
+        <TextView
+            android:textColor="#2846EF"
+            android:text="Họ tên:"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <EditText
+            android:id="@+id/edtHoTen"
+            android:textColor="#ffffff"
+            android:textColorHint="#CCC7C7"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Họ tên" />
+        <TextView
+            android:textColor="#2846EF"
+            android:text="Email:"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <EditText
+            android:id="@+id/edtEmail"
+            android:textColor="#ffffff"
+            android:textColorHint="#CCC7C7"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Email"
+            android:inputType="textEmailAddress" />
+        <TextView
+            android:textColor="#2846EF"
+            android:text="Vai trò:"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <RadioGroup
+            android:id="@+id/rgVaiTro"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <RadioButton
+                android:id="@+id/rbAdmin"
+                android:textColor="#ffffff"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Quản trị viên" />
+            <RadioButton
+                android:id="@+id/rbUser"
+                android:textColor="#ffffff"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Người dùng" />
+        </RadioGroup>
+
+        <Button
+            android:id="@+id/btnThemNguoiDung"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#7C7979"
+            android:text="Thêm Người Dùng" />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

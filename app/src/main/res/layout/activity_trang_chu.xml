@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:background="#121212"
+    android:layout_height="match_parent"
+    tools:context=".TrangChuActivity">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@drawable/backapp"
+        android:padding="8dp">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal"
+            android:layout_marginLeft="10dp"
+            android:padding="5dp"
+            android:alpha="0.8">
+            <ImageView
+                android:id="@+id/imgProfile"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center_vertical"
+                android:src="@drawable/user"/>
+            <TextView
+                android:id="@+id/tvTenNguoiDung"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:text="Tên người dùng"
+                android:textColor="#FFFFFF"
+                android:textSize="15dp"
+                android:layout_gravity="center_vertical"
+                android:textStyle="bold"
+                android:layout_weight="3" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="10dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnTatCa"
+                android:layout_width="55dp"
+                android:layout_height="30dp"
+                android:text="Trang chủ"
+                android:textSize="10sp"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#5C0C9B0C"
+                android:padding="0dp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="5dp">
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="160dp"
+                android:layout_height="70dp"
+                android:background="#09000000"
+                app:cardUseCompatPadding="true"
+                app:cardBackgroundColor="#55DCD9E6">
+
+                <ImageView
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginLeft="10dp"
+                    android:layout_gravity="center_vertical"
+                    android:src="@drawable/dlmix" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Daily Mix"
+                    android:layout_marginLeft="70dp"
+                    android:backgroundTint="#005E2BE0"
+                    android:textSize="15dp"
+                    android:layout_gravity="center_vertical"
+                    android:textColor="@color/white"/>
+            </androidx.cardview.widget.CardView>
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cvYeuThich"
+                android:layout_width="160dp"
+                android:layout_height="70dp"
+                android:background="#09000000"
+                app:cardUseCompatPadding="true"
+                android:layout_marginLeft="15dp"
+                app:cardBackgroundColor="#55DCD9E6">
+
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="5dp"
+                    android:src="@drawable/bhyt" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Bài hát yêu thích"
+                    android:layout_marginLeft="50dp"
+                    android:backgroundTint="#005E2BE0"
+                    android:textSize="13dp"
+                    android:layout_gravity="center_vertical"
+                    android:textColor="@color/white"/>
+            </androidx.cardview.widget.CardView>
+
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="10dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Bài hát đề xuất"
+                android:textColor="@color/white"/>
+
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:layout_weight="1">
+
+            <ListView
+                android:id="@+id/lvBaiHat"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:orientation="horizontal"
+            android:padding="5dp">
+            <ImageView
+                android:id="@+id/imgTrangChu"
+                android:src="@drawable/baseline_home_24"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"/>
+            <ImageView
+                android:id="@+id/imgSearch"
+                android:src="@drawable/baseline_search_24"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"/>
+            <ImageView
+                android:id="@+id/ThuVien"
+                android:src="@drawable/library"
+                android:layout_marginTop="5dp"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:layout_weight="1"/>
+            <ImageView
+                android:id="@+id/imgPhanHoi"
+                android:src="@drawable/baseline_email_24"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"/>
+
+        </LinearLayout>
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

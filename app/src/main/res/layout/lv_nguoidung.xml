@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:background="#5A262525"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="5dp">
+        <ImageView
+            android:id="@+id/imgAnhNguoiDung"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="15dp"
+            android:src="@drawable/user" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="90dp"
+            android:orientation="vertical"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="1"
+            android:padding="5dp">
+            <TextView
+                android:id="@+id/tvTenNguoiDung"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:layout_marginLeft="10dp"
+                android:textSize="9pt"
+                android:textColor="#FFFFFF"
+                android:text="Tên người dùng" />
+            <TextView
+                android:id="@+id/tvVaiTro"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:textColor="#FA0000"
+                android:textSize="17dp"
+                android:text="Vai trò" />
+
+
+        </LinearLayout>
+        <ImageView
+            android:id="@+id/imgXoaNguoiDung"
+            android:layout_gravity="center"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/baseline_delete_24" />
+        <ImageView
+            android:id="@+id/imgPhanQuyen"
+            android:layout_gravity="center"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/baseline_edit_24" />
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
