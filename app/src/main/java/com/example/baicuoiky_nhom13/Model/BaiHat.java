@@ -2,55 +2,46 @@ package com.example.baicuoiky_nhom13.Model;
 
 import java.io.Serializable;
 
+// Đảm bảo class implements Serializable để có thể truyền qua Intent
 public class BaiHat implements Serializable {
-    private int id;
-    private String tenBaiHat;
-    private String caSi;
-    private String hinhAnh;
-    private String linkBaiHat;
-    public BaiHat(){}
 
-    public BaiHat(int id, String tenBaiHat, String caSi, String hinhAnh, String linkBaiHat) {
-        this.id = id;
-        this.tenBaiHat = tenBaiHat;
-        this.caSi = caSi;
-        this.hinhAnh = hinhAnh;
-        this.linkBaiHat = linkBaiHat;
+    // Các thuộc tính phải khớp với tên trường trên Firestore
+    private String idBH;       // ID của bài hát (sẽ là ID của document)
+    private String tenBH;      // Tên bài hát
+    private String tenCaSi;    // Tên ca sĩ
+    private String hinhAnh;    // URL hình ảnh
+    private String linkBH;     // URL file nhạc
+    private String theLoai;    // Thể loại
+    private String tenBH_lowercase; // Trường dùng để tìm kiếm
+
+    // Constructor rỗng là BẮT BUỘC để Firestore có thể tự động chuyển đổi
+    public BaiHat() {
     }
 
-    @Override
-    public String toString() {
-        return "BaiHat{" +
-                "id=" + id +
-                ", tenBaiHat='" + tenBaiHat + '\'' +
-                ", caSi='" + caSi + '\'' +
-                ", hinhAnh='" + hinhAnh + '\'' +
-                ", linkBaiHat='" + linkBaiHat + '\'' +
-                '}';
+    // --- Getters and Setters (BẮT BUỘC) ---
+
+    public String getIdBH() {
+        return idBH;
     }
 
-    public int getId() {
-        return id;
+    public void setIdBH(String idBH) {
+        this.idBH = idBH;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public String getTenBH() {
+        return tenBH;
     }
 
-    public String getTenBaiHat() {
-        return tenBaiHat;
+    public void setTenBH(String tenBH) {
+        this.tenBH = tenBH;
     }
 
-    public void setTenBaiHat(String tenBaiHat) {
-        this.tenBaiHat = tenBaiHat;
+    public String getTenCaSi() {
+        return tenCaSi;
     }
 
-    public String getCaSi() {
-        return caSi;
-    }
-
-    public void setCaSi(String caSi) {
-        this.caSi = caSi;
+    public void setTenCaSi(String tenCaSi) {
+        this.tenCaSi = tenCaSi;
     }
 
     public String getHinhAnh() {
@@ -61,10 +52,27 @@ public class BaiHat implements Serializable {
         this.hinhAnh = hinhAnh;
     }
 
-    public String getLinkBaiHat() {
-        return linkBaiHat;
+    public String getLinkBH() {
+        return linkBH;
     }
 
-    public void setLinkBaiHat(String linkBaiHat) {
-        this.linkBaiHat = linkBaiHat;}
+    public void setLinkBH(String linkBH) {
+        this.linkBH = linkBH;
+    }
+
+    public String getTheLoai() {
+        return theLoai;
+    }
+
+    public void setTheLoai(String theLoai) {
+        this.theLoai = theLoai;
+    }
+
+    public String getTenBH_lowercase() {
+        return tenBH_lowercase;
+    }
+
+    public void setTenBH_lowercase(String tenBH_lowercase) {
+        this.tenBH_lowercase = tenBH_lowercase;
+    }
 }

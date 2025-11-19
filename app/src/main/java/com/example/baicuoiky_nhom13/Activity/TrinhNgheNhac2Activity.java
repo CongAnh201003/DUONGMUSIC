@@ -37,7 +37,6 @@ public class TrinhNgheNhac2Activity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        videoView = findViewById(R.id.videoView);
         songTitle = findViewById(R.id.songTitle);
         artistName = findViewById(R.id.artistName);
         imgQuayLai = findViewById(R.id.imgQuayLai);

@@ -2,7 +2,6 @@ package com.example.baicuoiky_nhom13.Adapter;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,76 +16,117 @@ import androidx.annotation.Nullable;
 
 import com.bumptech.glide.Glide;
 import com.example.baicuoiky_nhom13.Activity.ListFavoriteSongsActivity;
-import com.example.baicuoiky_nhom13.Database.SQLiteYeuThich;
-import com.example.baicuoiky_nhom13.Model.BaiHatYT;
+import com.example.baicuoiky_nhom13.Model.BaiHat; // Sửa thành Model BaiHat chuẩn
 import com.example.baicuoiky_nhom13.R;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 
-public class BaiHatYTAdapter extends ArrayAdapter {
-    Activity context;
-    int resource;
-    ArrayList<BaiHatYT> listBaiHat;
-    SQLiteYeuThich sqLiteYeuThich;
-    String sql="";
-    public BaiHatYTAdapter(Activity context,int resource,ArrayList<BaiHatYT> listBaiHat){
-        super(context,resource);
-        this.context=context;
-        this.resource=resource;
-        this.listBaiHat=listBaiHat;
+// Đổi BaiHatYT thành BaiHat để thống nhất
+public class BaiHatYTAdapter extends ArrayAdapter<BaiHat> {
+    private static final String TAG = "BaiHatYTAdapter";
+    private Activity context;
+    private int resource;
+    private ArrayList<BaiHat> listBaiHat;
+
+    // Thêm FirebaseFirestore và userId
+    private FirebaseFirestore firestore;
+    private String userId;
+
+    public BaiHatYTAdapter(Activity context, int resource, ArrayList<BaiHat> listBaiHat, String userId) {
+        super(context, resource, listBaiHat);
+        this.context = context;
+        this.resource = resource;
+        this.listBaiHat = listBaiHat;
+        // Khởi tạo Firestore và lấy userId
+        this.firestore = FirebaseFirestore.getInstance();
+        this.userId = userId;
     }
-    @Override
-    public int getCount() {
-        return this.listBaiHat.size();
-    }
+
+    // ArrayAdapter đã có getCount(), không cần override lại
 
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-        LayoutInflater layoutInflater=LayoutInflater.from(context);
-        View customView = layoutInflater.inflate(resource,null);
-
-        ImageView imgAnhBaiHat=customView.findViewById(R.id.imgAnhBaiHat);
-        TextView tvTenBaiHat=customView.findViewById(R.id.tvTenBaiHat);
-        TextView tvTenCaSi=customView.findViewById(R.id.tvTenCaSi);
-        ImageView imgXoaYT=customView.findViewById(R.id.imgXoaYT);
-        sqLiteYeuThich=new SQLiteYeuThich(context,SQLiteYeuThich.DATABASE_NAME,null,1);
-
-        BaiHatYT baiHat=listBaiHat.get(position);
-        tvTenBaiHat.setText(baiHat.getTenBaiHat());
-        tvTenCaSi.setText(baiHat.getCaSi());
-        if (baiHat.getHinhAnh().trim().length()>0){
-            Glide.with(context.getBaseContext()).load(baiHat.getHinhAnh()).into(imgAnhBaiHat);
+        if (convertView == null) {
+            LayoutInflater layoutInflater = LayoutInflater.from(context);
+            convertView = layoutInflater.inflate(resource, null);
         }
-        imgXoaYT.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                builder.setTitle("Xóa bài hát yêu thích");
-                builder.setMessage("Bạn thực sự muỗn xóa bài hát này?");
-                builder.setPositiveButton("Có", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        try {
-                            sql = "DELETE FROM BAI_HAT_YT WHERE id_yt='" + baiHat.getId_bh() + "';";
-                            sqLiteYeuThich.querySQL(sql);
-                            ((ListFavoriteSongsActivity) context).loadBHyt();
-                            dialogInterface.dismiss();
-                        } catch (Exception e) {
-                            Log.d("Lỗi DELETE SQL", e.toString());
-                            Toast.makeText(context, "Lỗi DELETE CSDL", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-                builder.setNegativeButton("Không", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.cancel();
-                    }
-                });
-                builder.create().show();
+
+        // Ánh xạ các View trong item layout
+        ImageView imgAnhBaiHat = convertView.findViewById(R.id.imgAnhBaiHat);
+        TextView tvTenBaiHat = convertView.findViewById(R.id.tvTenBaiHat);
+        TextView tvTenCaSi = convertView.findViewById(R.id.tvTenCaSi);
+        ImageView imgXoaYT = convertView.findViewById(R.id.imgXoaYT);
+
+        // Lấy đối tượng BaiHat ở vị trí hiện tại
+        BaiHat baiHat = listBaiHat.get(position);
+
+        if (baiHat != null) {
+            // Hiển thị thông tin bài hát
+            tvTenBaiHat.setText(baiHat.getTenBH());
+            tvTenCaSi.setText(baiHat.getTenCaSi());
+            // Dùng Glide để hiển thị ảnh từ URL
+            if (baiHat.getHinhAnh() != null && !baiHat.getHinhAnh().isEmpty()) {
+                Glide.with(context).load(baiHat.getHinhAnh()).into(imgAnhBaiHat);
+            } else {
+                imgAnhBaiHat.setImageResource(R.drawable.album); // Ảnh mặc định
             }
-        });
-        return customView;
+
+            // Thiết lập sự kiện click cho nút xóa (bỏ thích)
+            imgXoaYT.setOnClickListener(view -> showDeleteConfirmationDialog(baiHat));
+        }
+        return convertView;
+    }
+
+    /**
+     * Hiển thị hộp thoại xác nhận trước khi xóa (bỏ thích) bài hát.
+     * @param baiHat Bài hát cần xóa.
+     */
+    private void showDeleteConfirmationDialog(BaiHat baiHat) {
+        new AlertDialog.Builder(context)
+                .setTitle("Bỏ thích bài hát")
+                .setMessage("Bạn có chắc muốn bỏ thích bài hát '" + baiHat.getTenBH() + "'?")
+                .setPositiveButton("Có", (dialogInterface, i) -> {
+                    // Gọi hàm xóa bài hát khỏi Firestore
+                    removeSongFromFavorites(baiHat);
+                })
+                .setNegativeButton("Không", null)
+                .show();
+    }
+
+    /**
+     * Xóa document bài hát khỏi sub-collection "YeuThich" trên Firestore.
+     * @param baiHat Bài hát cần xóa.
+     */
+    private void removeSongFromFavorites(BaiHat baiHat) {
+        if (userId == null || userId.isEmpty()) {
+            Toast.makeText(context, "Lỗi: Không xác định được người dùng.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (baiHat == null || baiHat.getIdBH() == null || baiHat.getIdBH().isEmpty()) {
+            Toast.makeText(context, "Lỗi: Không xác định được bài hát.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // ID của document bài hát trong sub-collection "YeuThich"
+        String baiHatId = baiHat.getIdBH();
+
+        firestore.collection("NGUOI_DUNG").document(userId)
+                .collection("YeuThich").document(baiHatId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Đã xóa bài hát " + baiHatId + " khỏi danh sách yêu thích.");
+                    Toast.makeText(context, "Đã bỏ thích", Toast.LENGTH_SHORT).show();
+
+                    // Cập nhật lại giao diện bằng cách gọi hàm public trong Activity
+                    if (context instanceof ListFavoriteSongsActivity) {
+                        ((ListFavoriteSongsActivity) context).loadFavoriteSongs();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Lỗi khi bỏ thích bài hát: ", e);
+                    Toast.makeText(context, "Lỗi: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
     }
 }

@@ -1,116 +1,175 @@
 package com.example.baicuoiky_nhom13.Activity;
 
 import android.content.Intent;
-import android.os.Bundle;
+import android.os.Bundle;import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.baicuoiky_nhom13.Database.MySQLite;
 import com.example.baicuoiky_nhom13.Model.NguoiDung;
 import com.example.baicuoiky_nhom13.R;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class PhanQuyenActivity extends AppCompatActivity {
-    ImageView imgQuayLai,imgAnhDaiDien;
-    TextView tvTenNguoiDung,tvTenDangNhap,tvMatkhau,tvEmail,tvVaiTro;
-    RadioButton rdQuanTriVien,rdNguoiDung;
-    RadioGroup rgVaiTro;
-    Button btnSave;
-    // Vai trò đã chọn
-    private int selectedVaiTro;
+    private static final String TAG = "PhanQuyenActivity";
+
+    // --- UI Components ---
+    private ImageView imgQuayLai;
+    private TextView tvTenNguoiDung, tvVaiTroHienTai;
+    private EditText edtHoTen, edtEmail, edtMatKhau;
+    private RadioButton rdQuanTriVien, rdNguoiDung;
+    private RadioGroup rgVaiTro;
+    private Button btnSave;
+
+    // --- Dữ liệu ---
+    private NguoiDung nguoiDung;
+
+    // --- Firebase ---
+    private FirebaseFirestore firestore;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_phan_quyen);
+        applyWindowInsets();
+
+        // Khởi tạo
+        initViews();
+        firestore = FirebaseFirestore.getInstance();
+
+        // Lấy dữ liệu người dùng từ Intent và hiển thị
+        if (!loadUserDataFromIntent()) {
+            finish(); // Dừng lại nếu không có dữ liệu
+            return;
+        }
+
+        // Thiết lập sự kiện
+        setupClickListeners();
+    }
+
+    /**
+     * Lấy dữ liệu người dùng từ Intent và hiển thị lên giao diện.
+     * @return true nếu thành công, false nếu thất bại.
+     */
+    private boolean loadUserDataFromIntent() {
+        Intent intent = getIntent();
+        Bundle data = intent.getExtras();
+        if (data == null) {
+            Toast.makeText(this, "Lỗi: Không nhận được dữ liệu người dùng.", Toast.LENGTH_LONG).show();
+            return false;
+        }
+
+        nguoiDung = (NguoiDung) data.get("nd_value");
+
+        if (nguoiDung != null) {
+            // Hiển thị thông tin lên các trường
+            tvTenNguoiDung.setText(nguoiDung.getHoTen());
+            edtHoTen.setText(nguoiDung.getHoTen());
+            edtEmail.setText(nguoiDung.getEmail());
+            edtMatKhau.setText(nguoiDung.getMatKhau());
+
+            // Hiển thị và chọn đúng vai trò hiện tại
+            String vaiTro = nguoiDung.getVaiTro();
+            if ("admin".equalsIgnoreCase(vaiTro)) {
+                tvVaiTroHienTai.setText("Quản trị viên");
+                rdQuanTriVien.setChecked(true);
+            } else {
+                tvVaiTroHienTai.setText("Người dùng");
+                rdNguoiDung.setChecked(true);
+            }
+            return true;
+        } else {
+            Toast.makeText(this, "Lỗi: Dữ liệu người dùng không hợp lệ.", Toast.LENGTH_LONG).show();
+            return false;
+        }
+    }
+
+    /**
+     * Thiết lập sự kiện click cho các nút.
+     */
+    private void setupClickListeners() {
+        imgQuayLai.setOnClickListener(v -> finish());
+        btnSave.setOnClickListener(v -> updateAllChangesToFirestore());
+    }
+
+    /**
+     * Cập nhật tất cả các thay đổi (họ tên, mật khẩu, vai trò) lên Firestore.
+     */
+    private void updateAllChangesToFirestore() {
+        if (nguoiDung == null || nguoiDung.getId() == null || nguoiDung.getId().isEmpty()) {
+            Toast.makeText(this, "Lỗi: Không xác định được ID người dùng.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Lấy dữ liệu mới từ các trường EditText và RadioGroup
+        String hoTenMoi = edtHoTen.getText().toString().trim();
+        String matKhauMoi = edtMatKhau.getText().toString().trim();
+        String vaiTroMoi = rdQuanTriVien.isChecked() ? "admin" : "user";
+
+        if (hoTenMoi.isEmpty() || matKhauMoi.isEmpty()) {
+            Toast.makeText(this, "Họ tên và mật khẩu không được để trống!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Tạo một Map để chứa tất cả các trường cần cập nhật
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("hoTen", hoTenMoi);
+        updates.put("matKhau", matKhauMoi);
+        updates.put("vaiTro", vaiTroMoi);
+
+        String documentId = nguoiDung.getId();
+
+        firestore.collection("NGUOI_DUNG").document(documentId)
+                .update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Cập nhật thành công!", Toast.LENGTH_SHORT).show();
+                    // Báo hiệu cho Activity trước (QL_NguoiDungActivity) để nó tải lại danh sách
+                    setResult(RESULT_OK);
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Lỗi khi cập nhật: ", e);
+                    Toast.makeText(this, "Cập nhật thất bại: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+    }
+
+    // --- Các hàm khởi tạo và hệ thống ---
+
+    private void initViews() {
+        imgQuayLai = findViewById(R.id.imgQuayLai);
+        tvTenNguoiDung = findViewById(R.id.tvTenNguoiDung);
+        tvVaiTroHienTai = findViewById(R.id.tvVaiTroHienTai);
+        edtHoTen = findViewById(R.id.edtHoTen);
+        edtEmail = findViewById(R.id.edtEmail);
+        edtMatKhau = findViewById(R.id.edtMatKhau);
+        rgVaiTro = findViewById(R.id.rgVaiTro);
+        rdQuanTriVien = findViewById(R.id.rdQuanTriVien);
+        rdNguoiDung = findViewById(R.id.rdNguoiDung);
+        btnSave = findViewById(R.id.btnSave);
+
+        // Không cho phép sửa Email vì nó là định danh chính
+        edtEmail.setEnabled(false);
+        edtEmail.setFocusable(false);
+    }
+
+    private void applyWindowInsets() {
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
-        });
-        imgQuayLai = findViewById(R.id.imgQuayLai);
-        rdNguoiDung = findViewById(R.id.rdNguoiDung);
-        rdQuanTriVien = findViewById(R.id.rdQuanTriVien);
-        imgAnhDaiDien = findViewById(R.id.imgAnhDaiDien);
-        tvTenNguoiDung = findViewById(R.id.tvTenNguoiDung);
-        tvVaiTro = findViewById(R.id.tvVaiTro);
-        tvTenDangNhap = findViewById(R.id.tvTenDangNhap);
-        tvMatkhau = findViewById(R.id.tvMatkhau);
-        tvEmail = findViewById(R.id.tvEmail);
-        btnSave = findViewById(R.id.btnSave);
-        rgVaiTro = findViewById(R.id.rgVaiTro);
-        // Nhận Intent và lấy đối tượng NguoiDung
-        Intent intent = getIntent();
-        Bundle data = intent.getExtras();
-        NguoiDung nguoiDung = (NguoiDung) data.get("nd_value");
-        // xử lý sự kiện cho radioButton
-        if (nguoiDung != null) {
-
-            // Đặt trạng thái RadioButton theo vai trò hiện tại
-            selectedVaiTro = nguoiDung.getVaiTro();
-            if (selectedVaiTro == 1) {
-                rdQuanTriVien.setChecked(true);
-            } else {
-                rdNguoiDung.setChecked(true);
-            }
-
-        }
-        // Lắng nghe sự kiện thay đổi trên RadioGroup
-        rgVaiTro.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (checkedId == R.id.rdQuanTriVien) {
-                    selectedVaiTro = 1; // Vai trò: Quản trị viên
-                } else if (checkedId == R.id.rdNguoiDung) {
-                    selectedVaiTro = 2; // Vai trò: Người dùng
-                }
-            }
-        });
-        // Xử lý nút Save
-        btnSave.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (nguoiDung != null) {
-                    // Lấy giá trị vai trò từ RadioButton (ví dụ: nếu rdQuanTriVien được chọn thì vai trò = 1)
-                    int selectedVaiTro = rdQuanTriVien.isChecked() ? 1 : 2;
-
-                    // Cập nhật vai trò trong đối tượng nguoiDung
-                    nguoiDung.setVaiTro(selectedVaiTro);
-
-                    // Cập nhật vào cơ sở dữ liệu
-                    MySQLite db = new MySQLite(PhanQuyenActivity.this, MySQLite.DATABASE_NAME, null, 1);
-                    db.capNhatVaiTroNguoiDung(nguoiDung.getId(), selectedVaiTro);
-
-                    // Trả kết quả về cho Activity trước
-                    Intent resultIntent = new Intent();
-                    resultIntent.putExtra("updated_user", nguoiDung);
-                    setResult(123, resultIntent);
-                    finish();
-                }
-            }
-        });
-
-        // hiển thị thông tin người dùng
-        if (nguoiDung != null) {
-            tvTenNguoiDung.setText(nguoiDung.getHoTen());
-            tvTenDangNhap.setText(nguoiDung.getTenDN());
-            tvMatkhau.setText(nguoiDung.getMatKhau());
-            tvEmail.setText(nguoiDung.getEmail());
-        }
-        imgQuayLai.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
         });
     }
 }

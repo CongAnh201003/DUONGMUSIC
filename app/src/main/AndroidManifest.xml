@@ -63,6 +63,15 @@
             android:name=".Activity.AddUserActivity"
             android:exported="false" />
         <activity
+            android:name=".Activity.AddSongActivity"
+            android:exported="false"/>
+        <!-- Thêm Activity mới này vào -->
+        <activity
+            android:name=".Activity.UserSongListActivity"
+            android:exported="false" />
+
+
+        <activity
             android:name=".TrangChuActivity"
             android:exported="false" />
         <activity

@@ -8,11 +8,12 @@
     android:background="#121212"
     tools:context=".Activity.AddUserActivity">
     <LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="16dp"
+        android:background="@drawable/backapp"
+        >
         <ImageView
             android:id="@+id/imgBack"
             android:src="@drawable/baseline_arrow_back_ios_24"
@@ -23,7 +24,6 @@
         <TextView
             android:text="Thêm người dùng"
             android:textSize="10pt"
-            android:background="#7C7979"
             android:textStyle="bold"
             android:textAlignment="center"
             android:gravity="center_vertical"
@@ -112,8 +112,14 @@
             android:id="@+id/btnThemNguoiDung"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:backgroundTint="#7C7979"
-            android:text="Thêm Người Dùng" />
+            android:text="Thêm Người Dùng"
+            android:backgroundTint="#A64D79"
+            android:textColor="@color/white"
+            android:textSize="23dp"
+            android:textStyle="bold"
+            android:layout_gravity="center"
+            android:layout_marginTop="25dp"
+            />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

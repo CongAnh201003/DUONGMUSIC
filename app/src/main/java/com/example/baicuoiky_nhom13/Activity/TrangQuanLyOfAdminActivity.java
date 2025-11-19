@@ -6,95 +6,82 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
-import com.example.baicuoiky_nhom13.Database.MySQLite;
 import com.example.baicuoiky_nhom13.Model.NguoiDung;
 import com.example.baicuoiky_nhom13.R;
+import com.example.baicuoiky_nhom13.TrangChuActivity;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class TrangQuanLyOfAdminActivity extends AppCompatActivity {
-    TextView tvTenAdmin;
-    ImageView imgQuanLyNhac,imgQuanLyUser;
-    Button btnTrangProfileAdmin;
-    MySQLite mySQLite;
+
+    private TextView tvTenAdmin;
+    private ImageView imgQuanLyNhac, imgQuanLyUser;
+    private Button btnTrangProfileAdmin;
+
+    private NguoiDung currentAdmin;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_trang_quan_ly_of_admin);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
-        tvTenAdmin=findViewById(R.id.tvTenAdmin);
-        imgQuanLyNhac=findViewById(R.id.imgQuanLyNhac);
-        imgQuanLyUser=findViewById(R.id.imgQuanLyUser);
-        btnTrangProfileAdmin=findViewById(R.id.btnTrangProfileAdmin);
-        mySQLite=new MySQLite(getBaseContext(),MySQLite.DATABASE_NAME,null,1);
 
-        Intent intent=getIntent();
-        NguoiDung nguoiDung= (NguoiDung) intent.getSerializableExtra("admin");
-        tvTenAdmin.setText(nguoiDung.getHoTen());
-        String hoten=nguoiDung.getHoTen();
-        String mk=nguoiDung.getMatKhau();
-        String email=nguoiDung.getEmail();
-        String tenDN=nguoiDung.getTenDN();
-        String id=nguoiDung.getId()+"";
-        int idND=Integer.parseInt(id);
-
-        imgQuanLyNhac.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent QuanLyNhacIntent=new Intent(getBaseContext(), QuanLyBaiHatActivity.class);
-                startActivity(QuanLyNhacIntent);
-            }
-        });
-
-        imgQuanLyUser.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent QLNGuoiDungIntent=new Intent(getBaseContext(), QL_NguoiDungActivity.class);
-                startActivity(QLNGuoiDungIntent);
-            }
-        });
-        btnTrangProfileAdmin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent profileAdminIntent=new Intent(getBaseContext(),ProfileAdminActivity.class);
-                NguoiDung nguoiDung1=mySQLite.loadNguoiDung(idND);
-                Bundle data=new Bundle();
-                data.putSerializable("admin",nguoiDung1);
-                profileAdminIntent.putExtras(data);
-                ProfileLauncher.launch(profileAdminIntent);
-            }
-        });
-        onBackPressed();
-    }
-    private final ActivityResultLauncher<Intent> ProfileLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> {
-                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                    Intent data = result.getData();
-                    String hoten=data.getStringExtra("hoten");
-                    tvTenAdmin.setText(hoten);
-
-
-                }
-            }
-    );
-    @Override
-    public void onBackPressed() {
-        // Không làm gì cả để chặn nút Back
+        initViews();
+        loadAdminData();
+        setupListeners();
     }
 
+    private void initViews() {
+        tvTenAdmin = findViewById(R.id.tvTenAdmin);
+        imgQuanLyNhac = findViewById(R.id.imgQuanLyNhac);
+        imgQuanLyUser = findViewById(R.id.imgQuanLyUser);
+        btnTrangProfileAdmin = findViewById(R.id.btnTrangProfileAdmin);
+    }
+
+    private void loadAdminData() {
+        // Nhận dữ liệu từ LoginActivity gửi sang
+        Intent intent = getIntent();
+        if (intent != null && intent.hasExtra("nguoi_dung")) {
+            currentAdmin = (NguoiDung) intent.getSerializableExtra("nguoi_dung");
+        }
+
+        if (currentAdmin != null) {
+            String name = currentAdmin.getHoTen();
+            if (name == null || name.isEmpty()) name = "Admin";
+            tvTenAdmin.setText("Xin chào, " + name);
+        } else {
+            // Nếu không có dữ liệu (ví dụ chạy trực tiếp), check firebase
+            if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+                startActivity(new Intent(this, LoginActivity.class));
+                finish();
+            }
+        }
+    }
+
+    private void setupListeners() {
+        // 1. Nút Quản lý nhạc (Ví dụ: chuyển sang activity quản lý bài hát)
+        imgQuanLyNhac.setOnClickListener(v -> {
+            Toast.makeText(this, "Chức năng Quản lý bài hát", Toast.LENGTH_SHORT).show();
+            // Intent i = new Intent(this, QuanLyBaiHatActivity.class);
+            // startActivity(i);
+        });
+
+        // 2. Nút Quản lý người dùng (Ví dụ: chuyển sang activity quản lý user)
+        imgQuanLyUser.setOnClickListener(v -> {
+            Toast.makeText(this, "Chức năng Quản lý người dùng", Toast.LENGTH_SHORT).show();
+            // Intent i = new Intent(this, QuanLyNguoiDungActivity.class);
+            // startActivity(i);
+        });
+
+        // 3. Nút đến trang cá nhân (Ở đây tôi đang để nó chuyển về TrangChuActivity nhưng với giao diện Admin,
+        // hoặc bạn có thể tạo một Activity Profile riêng)
+        btnTrangProfileAdmin.setOnClickListener(v -> {
+            Intent intent = new Intent(TrangQuanLyOfAdminActivity.this, TrangChuActivity.class);
+            // Truyền tiếp user admin sang trang chủ để hiển thị đúng avatar/tên
+            intent.putExtra("nguoi_dung", currentAdmin);
+            startActivity(intent);
+        });
+    }
 }

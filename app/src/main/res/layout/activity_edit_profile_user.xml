@@ -5,11 +5,13 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#121212"
+    android:background="@drawable/backapp"
     tools:context=".Activity.EditProfileUserActivity">
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="@drawable/backapp"
+        >
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"

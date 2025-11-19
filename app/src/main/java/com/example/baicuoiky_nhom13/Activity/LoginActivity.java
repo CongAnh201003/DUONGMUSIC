@@ -1,123 +1,165 @@
 package com.example.baicuoiky_nhom13.Activity;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.example.baicuoiky_nhom13.Model.NguoiDung;
 import com.example.baicuoiky_nhom13.R;
 import com.example.baicuoiky_nhom13.TrangChuActivity;
-import com.google.firebase.FirebaseApp;
+import com.example.baicuoiky_nhom13.Activity.TrangQuanLyOfAdminActivity;
+
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 public class LoginActivity extends AppCompatActivity {
 
-    EditText username_input, password_input;
-    Button btnLogin;
-    TextView tvDangKy;
-
-    FirebaseAuth firebaseAuth;
-    FirebaseFirestore firestore;
+    private EditText edtEmail, edtPassword;
+    private Button btnLogin;
+    private TextView tvRegister;
+    private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        FirebaseApp.initializeApp(this);
-
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_login);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+        initViews();
+        initFirebase();
+        setupListeners();
+    }
 
-        username_input = findViewById(R.id.username_input);
-        password_input = findViewById(R.id.password_input);
+    private void initViews() {
+        // Kiểm tra lại ID XML của bạn, nếu XML là username_input thì để nguyên,
+        // còn nếu là edt_email thì sửa lại cho khớp
+        edtEmail = findViewById(R.id.username_input);
+        edtPassword = findViewById(R.id.password_input);
         btnLogin = findViewById(R.id.btnSignup);
-        tvDangKy = findViewById(R.id.tvDangKy);
+        tvRegister = findViewById(R.id.tvDangKy);
 
-        firebaseAuth = FirebaseAuth.getInstance();
-        firestore = FirebaseFirestore.getInstance();
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Đang đăng nhập...");
+        progressDialog.setCancelable(false);
+    }
 
-        // Chuyển sang trang đăng ký
-        tvDangKy.setOnClickListener(view -> {
-            Intent DangKyIntent = new Intent(getBaseContext(), RegisterActivity.class);
-            startActivity(DangKyIntent);
-        });
+    private void initFirebase() {
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
+    }
 
-        btnLogin.setOnClickListener(view -> {
-            String email = username_input.getText().toString().trim();
-            String password = password_input.getText().toString().trim();
+    private void setupListeners() {
+        btnLogin.setOnClickListener(view -> handleLogin());
+        if (tvRegister != null) {
+            tvRegister.setOnClickListener(v -> startActivity(new Intent(LoginActivity.this, RegisterActivity.class)));
+        }
+    }
 
-            if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show();
-                return;
-            }
+    private void handleLogin() {
+        String email = edtEmail.getText().toString().trim();
+        String password = edtPassword.getText().toString().trim();
 
-            // Admin cứng
-            if(email.equals("admin@gmail.com") && password.equals("123456")){
-                NguoiDung admin = new NguoiDung();
-                admin.setTenDN("admin");
-                admin.setHoTen("Quản trị viên");
-                admin.setEmail("admin@gmail.com");
-                admin.setVaiTro(1);
+        if (TextUtils.isEmpty(email)) {
+            edtEmail.setError("Vui lòng nhập Email");
+            return;
+        }
+        if (TextUtils.isEmpty(password)) {
+            edtPassword.setError("Vui lòng nhập Mật khẩu");
+            return;
+        }
 
-                Intent intentAdmin = new Intent(this, TrangQuanLyOfAdminActivity.class);
-                intentAdmin.putExtra("admin", admin);
-                startActivity(intentAdmin);
-                return;
-            }
+        progressDialog.show();
 
-            // Tài khoản Firebase Auth
-            firebaseAuth.signInWithEmailAndPassword(email, password)
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            // Encode email để lấy document Firestore
-                            String emailId = email.replace(".", ",");
-
-                            firestore.collection("NGUOI_DUNG")
-                                    .document(emailId)
-                                    .get()
-                                    .addOnSuccessListener(documentSnapshot -> {
-                                        if (documentSnapshot.exists()) {
-                                            NguoiDung user = documentSnapshot.toObject(NguoiDung.class);
-                                            if (user != null) {
-                                                if (user.getVaiTro() == 1) {
-                                                    Intent intentAdmin = new Intent(this, TrangQuanLyOfAdminActivity.class);
-                                                    intentAdmin.putExtra("admin", user);
-                                                    startActivity(intentAdmin);
-                                                } else if (user.getVaiTro() == 2) {
-                                                    Intent intentUser = new Intent(this, TrangChuActivity.class);
-                                                    intentUser.putExtra("nguoi_dung", user);
-                                                    startActivity(intentUser);
-                                                }
-                                            } else {
-                                                Toast.makeText(this, "Không lấy được thông tin người dùng", Toast.LENGTH_SHORT).show();
-                                            }
-                                        } else {
-                                            Toast.makeText(this, "Người dùng không tồn tại!", Toast.LENGTH_SHORT).show();
-                                        }
-                                    })
-                                    .addOnFailureListener(e ->
-                                            Toast.makeText(this, "Lỗi đọc Firestore: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-                        } else {
-                            Toast.makeText(this, "Email hoặc mật khẩu không đúng!", Toast.LENGTH_SHORT).show();
+        mAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+                        if (firebaseUser != null) {
+                            fetchUserDataAndNavigate(firebaseUser.getEmail());
                         }
-                    });
+                    } else {
+                        progressDialog.dismiss();
+                        Toast.makeText(LoginActivity.this, "Đăng nhập thất bại: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void fetchUserDataAndNavigate(String email) {
+        // === SỬA ĐỔI QUAN TRỌNG TẠI ĐÂY ===
+        // Database của bạn đang dùng ID là "admin@gmail.com" (giữ nguyên dấu chấm)
+        // Nên ta KHÔNG thay thế dấu chấm bằng dấu phẩy nữa.
+        String documentId = email;
+
+        Log.d("LoginCheck", "Đang tìm Document ID: " + documentId);
+
+        db.collection("NGUOI_DUNG").document(documentId)
+                .get()
+                .addOnCompleteListener(task -> {
+                    progressDialog.dismiss();
+                    if (task.isSuccessful()) {
+                        DocumentSnapshot document = task.getResult();
+                        if (document != null && document.exists()) {
+                            NguoiDung user = document.toObject(NguoiDung.class);
+                            if (user != null) {
+                                user.setId(documentId);
+                                user.setEmail(email);
+
+                                // GỌI HÀM ĐIỀU HƯỚNG PHÂN QUYỀN
+                                navigateUser(user);
+                            }
+                        } else {
+                            // Nếu vẫn không tìm thấy, thử tìm bằng dấu phẩy (phòng hờ user khác)
+                            fetchUserDataFallback(email);
+                        }
+                    } else {
+                        Toast.makeText(LoginActivity.this, "Lỗi kết nối Database", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    // Hàm phụ: Nếu tìm bằng dấu chấm thất bại, thử tìm bằng dấu phẩy
+    private void fetchUserDataFallback(String email) {
+        String documentId = email.replace(".", ",");
+        db.collection("NGUOI_DUNG").document(documentId).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
+                NguoiDung user = task.getResult().toObject(NguoiDung.class);
+                if (user != null) {
+                    user.setId(documentId);
+                    user.setEmail(email);
+                    navigateUser(user);
+                }
+            } else {
+                Toast.makeText(LoginActivity.this, "Không tìm thấy thông tin người dùng!", Toast.LENGTH_SHORT).show();
+            }
         });
+    }
 
+    private void navigateUser(NguoiDung user) {
+        Intent intent;
+        // Trim() để xóa khoảng trắng thừa nếu có
+        String role = user.getVaiTro() != null ? user.getVaiTro().trim() : "";
 
+        if ("admin".equalsIgnoreCase(role)) {
+            Log.d("Login", "User is Admin -> Go to Admin Dashboard");
+            intent = new Intent(LoginActivity.this, TrangQuanLyOfAdminActivity.class);
+        } else {
+            Log.d("Login", "User is Normal -> Go to Home");
+            intent = new Intent(LoginActivity.this, TrangChuActivity.class);
+        }
+
+        intent.putExtra("nguoi_dung", user);
+        startActivity(intent);
+        finish();
     }
 }

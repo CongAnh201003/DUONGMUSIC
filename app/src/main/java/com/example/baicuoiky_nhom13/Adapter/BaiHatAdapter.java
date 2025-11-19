@@ -1,11 +1,11 @@
 package com.example.baicuoiky_nhom13.Adapter;
 
 import android.app.Activity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.Filter;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -14,124 +14,113 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.bumptech.glide.Glide;
-import com.example.baicuoiky_nhom13.Database.SQLiteYeuThich;
 import com.example.baicuoiky_nhom13.Model.BaiHat;
 import com.example.baicuoiky_nhom13.R;
-import com.example.baicuoiky_nhom13.TrangChuActivity;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 
-public class BaiHatAdapter extends ArrayAdapter {
-    Activity context;
-    int resource;
-    ArrayList<BaiHat> listBaiHat,listBHBackup, listBHFilter;;
-    SQLiteYeuThich sqLiteYeuThich;
-    String sql="";
-    public BaiHatAdapter(Activity context,int resource,ArrayList<BaiHat> listBaiHat){
-        super(context,resource);
-        this.context=context;
-        this.resource=resource;
-        this.listBaiHat=listBaiHat;
-        this.listBHBackup = new ArrayList<>(listBaiHat);  // Lưu danh sách bài hát gốc để tìm kiếm
-        this.listBHFilter = new ArrayList<>(listBaiHat);  // Danh sách bài hát đã lọc
+public class BaiHatAdapter extends ArrayAdapter<BaiHat> {
+    private static final String TAG = "BaiHatAdapter";
+    private Activity context;
+    private int resource;
+    private ArrayList<BaiHat> listBaiHat;
 
+    private FirebaseFirestore firestore;
+    private String userId;
+
+    public BaiHatAdapter(Activity context, int resource, ArrayList<BaiHat> listBaiHat, String userId) {
+        super(context, resource, listBaiHat);
+        this.context = context;
+        this.resource = resource;
+        this.listBaiHat = listBaiHat;
+        this.firestore = FirebaseFirestore.getInstance();
+        this.userId = userId;
     }
-
-    @Override
-    public int getCount() {
-        return this.listBaiHat.size();
-    }
-    @Override
-    public BaiHat getItem(int position) {
-        return listBaiHat.get(position);
-    }
-
-
 
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-        LayoutInflater layoutInflater=LayoutInflater.from(context);
-        View customView = layoutInflater.inflate(resource,null);
-
-        ImageView imgAnhBaiHat=customView.findViewById(R.id.imgAnhBaiHat);
-        TextView tvTenBaiHat=customView.findViewById(R.id.tvTenBaiHat);
-        TextView tvTenCaSi=customView.findViewById(R.id.tvTenCaSi);
-        ImageView imgAdd=customView.findViewById(R.id.imgAdd);
-        ImageView imgXoaYT=customView.findViewById(R.id.imgXoaYT);
-        sqLiteYeuThich=new SQLiteYeuThich(context,SQLiteYeuThich.DATABASE_NAME,null,1);
-
-        BaiHat baiHat=listBaiHat.get(position);
-        tvTenBaiHat.setText(baiHat.getTenBaiHat());
-        tvTenCaSi.setText(baiHat.getCaSi());
-        if (baiHat.getHinhAnh().trim().length()>0){
-            Glide.with(context.getBaseContext()).load(baiHat.getHinhAnh()).into(imgAnhBaiHat);
+        ViewHolder holder;
+        if (convertView == null) {
+            LayoutInflater layoutInflater = LayoutInflater.from(context);
+            convertView = layoutInflater.inflate(resource, null);
+            holder = new ViewHolder();
+            holder.imgAnhBaiHat = convertView.findViewById(R.id.imgAnhBaiHat);
+            holder.tvTenBaiHat = convertView.findViewById(R.id.tvTenBaiHat);
+            holder.tvTenCaSi = convertView.findViewById(R.id.tvTenCaSi);
+            holder.imgAdd = convertView.findViewById(R.id.imgAdd);
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
         }
-        imgAdd.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String tenBH=baiHat.getTenBaiHat();
-                String casi=baiHat.getCaSi();
-                String linkAnh=baiHat.getHinhAnh();
-                String linkBH=baiHat.getLinkBaiHat();
-                int id=((TrangChuActivity) context).idND();
-                int dem=sqLiteYeuThich.loadBH(tenBH,id);
-                if (dem<=0){
-                    sql="INSERT INTO BAI_HAT_YT (id_nd,tenBH_yt,CaSi_yt,hinhAnh_yt,linkBH_yt) VALUES ( "+
-                            id+", '"+
-                            tenBH+"', '"+
-                            casi+"', '"+
-                            linkAnh+"', '"+
-                            linkBH+"');";
-                    sqLiteYeuThich.querySQL(sql);
-                    Toast.makeText(context,"Đã thêm vào danh sách yêu thích",Toast.LENGTH_SHORT).show();
-                    imgAdd.setImageResource(R.drawable.baseline_expand_circle_down_24);
+
+        BaiHat baiHat = listBaiHat.get(position);
+
+        if (baiHat != null) {
+            holder.tvTenBaiHat.setText(baiHat.getTenBH());
+            holder.tvTenCaSi.setText(baiHat.getTenCaSi());
+
+            if (baiHat.getHinhAnh() != null && !baiHat.getHinhAnh().isEmpty()) {
+                Glide.with(context).load(baiHat.getHinhAnh()).into(holder.imgAnhBaiHat);
+            } else {
+                holder.imgAnhBaiHat.setImageResource(R.drawable.album);
+            }
+
+            holder.imgAdd.setOnClickListener(view -> addSongToFavorites(baiHat, holder.imgAdd));
+        }
+
+        return convertView;
+    }
+
+    private void addSongToFavorites(BaiHat baiHat, ImageView addButton) {
+        if (userId == null || userId.isEmpty()) {
+            Toast.makeText(context, "Vui lòng đăng nhập để sử dụng chức năng này", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (baiHat == null || baiHat.getIdBH() == null || baiHat.getIdBH().isEmpty()) {
+            Toast.makeText(context, "Lỗi: Không thể xác định bài hát", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String baiHatId = baiHat.getIdBH();
+
+        DocumentReference favoriteSongRef = firestore.collection("NGUOI_DUNG").document(userId)
+                .collection("YeuThich").document(baiHatId);
+
+        favoriteSongRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                if (task.getResult().exists()) {
+                    Toast.makeText(context, "Bài hát đã có trong danh sách yêu thích", Toast.LENGTH_SHORT).show();
+                } else {
+                    favoriteSongRef.set(baiHat)
+                            .addOnSuccessListener(aVoid -> {
+                                Log.d(TAG, "Đã thêm bài hát " + baiHatId + " vào danh sách yêu thích.");
+                                Toast.makeText(context, "Đã thêm vào danh sách yêu thích", Toast.LENGTH_SHORT).show();
+
+                                // === LỖI ĐÃ SỬA: Thay thế bằng icon có sẵn ===
+                                addButton.setImageResource(android.R.drawable.ic_menu_save); // Đổi icon thành biểu tượng lưu
+                                addButton.setEnabled(false);
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Lỗi khi thêm vào yêu thích: ", e);
+                                Toast.makeText(context, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
                 }
-                else {
-                    Toast.makeText(context,"Đã có trong danh sách yêu thích",Toast.LENGTH_SHORT).show();
-                }
-
-
-
+            } else {
+                Log.e(TAG, "Lỗi khi kiểm tra bài hát yêu thích: ", task.getException());
+                Toast.makeText(context, "Lỗi: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
-
-        return customView;
-    }
-    // Tìm kiếm bài hát theo tên và ca sĩ
-    @Override
-    public Filter getFilter() {
-        return new Filter() {
-            @Override
-            protected FilterResults performFiltering(CharSequence constraint) {
-                FilterResults filterResults = new FilterResults();
-                String query = constraint.toString().trim().toLowerCase();
-
-                // Nếu không có từ khóa tìm kiếm, hiển thị tất cả bài hát
-                if (query.length() < 1) {
-                    listBHFilter = listBHBackup;
-                } else {
-                    listBHFilter = new ArrayList<>();
-                    // Lọc bài hát theo tên bài hát và ca sĩ
-                    for (BaiHat baiHat : listBHBackup) {
-                        if (baiHat.getTenBaiHat().toLowerCase().contains(query) ||
-                                baiHat.getCaSi().toLowerCase().contains(query)) {
-                            listBHFilter.add(baiHat);
-                        }
-                    }
-                }
-
-                filterResults.values = listBHFilter;
-                return filterResults;
-            }
-
-            @Override
-            protected void publishResults(CharSequence constraint, FilterResults results) {
-                // Cập nhật danh sách đã lọc và thông báo cho Adapter để hiển thị lại
-                listBHFilter = (ArrayList<BaiHat>) results.values;
-                notifyDataSetChanged();
-            }
-        };
     }
 
+    static class ViewHolder {
+        ImageView imgAnhBaiHat;
+        TextView tvTenBaiHat;
+        TextView tvTenCaSi;
+        ImageView imgAdd;
+    }
 }
