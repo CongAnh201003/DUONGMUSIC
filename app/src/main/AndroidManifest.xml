@@ -65,12 +65,54 @@
         <activity
             android:name=".Activity.AddSongActivity"
             android:exported="false"/>
-        <!-- Thêm Activity mới này vào -->
         <activity
-            android:name=".Activity.UserSongListActivity"
+            android:name=".Activity.EditSongActivity"
             android:exported="false" />
-
-
+        <activity
+            android:name=".Activity.EditProfileAdminActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activity.EditProfileUserActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activity.SearchActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activity.ListFavoriteSongsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activity.TrinhNgheNhacActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activity.TrinhNgheNhac2Activity"
+            android:exported="false" />
+        <activity
+            android:name=".Activity.ProfileUserActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activity.ProfileAdminActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activity.PhanHoiActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activity.PhanQuyenActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activity.QL_NguoiDungActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activity.TrangQuanLyOfAdminActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activity.QuanLyBaiHatActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activity.EditProfileAdminActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activity.EditProfileUserActivity"
+            android:exported="false" />
         <activity
             android:name=".TrangChuActivity"
             android:exported="false" />

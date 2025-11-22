@@ -51,7 +51,7 @@ public class BaiHatAdapter extends ArrayAdapter<BaiHat> {
             holder.imgAnhBaiHat = convertView.findViewById(R.id.imgAnhBaiHat);
             holder.tvTenBaiHat = convertView.findViewById(R.id.tvTenBaiHat);
             holder.tvTenCaSi = convertView.findViewById(R.id.tvTenCaSi);
-            holder.imgAdd = convertView.findViewById(R.id.imgAdd);
+            holder.imgAdd = convertView.findViewById(R.id.btnChonAnh);
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();

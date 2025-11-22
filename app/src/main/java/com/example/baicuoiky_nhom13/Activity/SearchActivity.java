@@ -122,7 +122,7 @@ public class SearchActivity extends AppCompatActivity {
     private void initListView() {
         searchResults = new ArrayList<>();
         // Cần truyền thêm userId, tạm thời để trống
-        baiHatAdapter = new BaiHatAdapter(this, R.layout.lv_baihat, searchResults, "");
+        baiHatAdapter = new BaiHatAdapter(this, R.layout.layout_item_baihat, searchResults, "");
         lvSearchResult.setAdapter(baiHatAdapter);
     }
 
