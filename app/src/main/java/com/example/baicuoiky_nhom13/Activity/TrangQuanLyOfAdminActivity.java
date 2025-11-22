@@ -64,15 +64,15 @@ public class TrangQuanLyOfAdminActivity extends AppCompatActivity {
         // 1. Nút Quản lý nhạc (Ví dụ: chuyển sang activity quản lý bài hát)
         imgQuanLyNhac.setOnClickListener(v -> {
             Toast.makeText(this, "Chức năng Quản lý bài hát", Toast.LENGTH_SHORT).show();
-            // Intent i = new Intent(this, QuanLyBaiHatActivity.class);
-            // startActivity(i);
+            Intent i = new Intent(this, QuanLyBaiHatActivity.class);
+            startActivity(i);
         });
 
         // 2. Nút Quản lý người dùng (Ví dụ: chuyển sang activity quản lý user)
         imgQuanLyUser.setOnClickListener(v -> {
             Toast.makeText(this, "Chức năng Quản lý người dùng", Toast.LENGTH_SHORT).show();
-            // Intent i = new Intent(this, QuanLyNguoiDungActivity.class);
-            // startActivity(i);
+            Intent i = new Intent(this, QL_NguoiDungActivity.class);
+            startActivity(i);
         });
 
         // 3. Nút đến trang cá nhân (Ở đây tôi đang để nó chuyển về TrangChuActivity nhưng với giao diện Admin,

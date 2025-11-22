@@ -2,136 +2,145 @@ package com.example.baicuoiky_nhom13.Adapter;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.util.Log;
+import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
 import com.bumptech.glide.Glide;
-import com.example.baicuoiky_nhom13.Activity.QuanLyBaiHatActivity;
+import com.example.baicuoiky_nhom13.Activity.EditSongActivity;
 import com.example.baicuoiky_nhom13.Model.BaiHat;
 import com.example.baicuoiky_nhom13.R;
-// Thêm import cho Firestore
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 
-// Sửa lại class signature cho đúng chuẩn
-public class QuanLyBHAdapter extends ArrayAdapter<BaiHat> {
-    private static final String TAG = "QuanLyBHAdapter";
-    private Activity context;
-    private int resource;
-    private ArrayList<BaiHat> listBaiHat;
+public class QuanLyBHAdapter extends BaseAdapter {
 
-    // Thêm FirebaseFirestore
+    private Context context;
+    private int layout;
+    private ArrayList<BaiHat> listBaiHat;
     private FirebaseFirestore firestore;
 
-    // Sửa lại constructor cho đúng chuẩn và khởi tạo Firestore
-    public QuanLyBHAdapter(Activity context, int resource, ArrayList<BaiHat> listBaiHat) {
-        super(context, resource, listBaiHat);
+    public QuanLyBHAdapter(Context context, int layout, ArrayList<BaiHat> listBaiHat) {
         this.context = context;
-        this.resource = resource;
+        this.layout = layout;
         this.listBaiHat = listBaiHat;
         this.firestore = FirebaseFirestore.getInstance();
     }
 
-    // ArrayAdapter đã có getCount(), không cần override lại
-
-    @NonNull
     @Override
-    public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-        // Tối ưu hóa ListView bằng ViewHolder pattern
+    public int getCount() {
+        return listBaiHat.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return listBaiHat.get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    // ViewHolder chứa các thành phần giao diện của 1 dòng
+    private class ViewHolder {
+        ImageView imgHinh, imgEdit, imgDelete; // Đã thêm nút Sửa và Xóa
+        TextView tvTenBH, tvTenCaSi, tvTheLoai;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder holder;
+
         if (convertView == null) {
-            LayoutInflater layoutInflater = LayoutInflater.from(context);
-            convertView = layoutInflater.inflate(resource, null);
             holder = new ViewHolder();
-            holder.imgQLAnhBaiHat = convertView.findViewById(R.id.imgQLAnhBaiHat);
-            holder.tvQLTenBaiHat = convertView.findViewById(R.id.tvQLTenBaiHat);
-            holder.tvQLTenCaSi = convertView.findViewById(R.id.tvQLTenCaSi);
-            holder.imgXoaBH = convertView.findViewById(R.id.imgXoaBaiHat);
+            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            convertView = inflater.inflate(layout, null);
+
+            // Ánh xạ view từ layout_item_baihat.xml
+            holder.imgHinh = convertView.findViewById(R.id.imgItemHinh);
+            holder.tvTenBH = convertView.findViewById(R.id.tvItemTenBaiHat);
+            holder.tvTenCaSi = convertView.findViewById(R.id.tvItemTenCaSi);
+            holder.tvTheLoai = convertView.findViewById(R.id.tvItemTheLoai);
+
+            // Ánh xạ 2 nút chức năng mới
+            holder.imgEdit = convertView.findViewById(R.id.imgEdit);
+            holder.imgDelete = convertView.findViewById(R.id.imgDelete);
+
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
 
-        // Lấy đối tượng BaiHat ở vị trí hiện tại
+        // Lấy bài hát ở vị trí hiện tại
         BaiHat baiHat = listBaiHat.get(position);
 
-        if (baiHat != null) {
-            // === LỖI ĐÃ SỬA: Dùng đúng tên phương thức từ Model ===
-            holder.tvQLTenBaiHat.setText(baiHat.getTenBH());
-            holder.tvQLTenCaSi.setText(baiHat.getTenCaSi());
+        // Gán dữ liệu text
+        holder.tvTenBH.setText(baiHat.getTenBH());
+        holder.tvTenCaSi.setText(baiHat.getTenCaSi());
+        holder.tvTheLoai.setText(baiHat.getTheLoai());
 
-            // Dùng Glide để hiển thị ảnh từ URL
-            if (baiHat.getHinhAnh() != null && !baiHat.getHinhAnh().isEmpty()) {
-                Glide.with(context).load(baiHat.getHinhAnh()).into(holder.imgQLAnhBaiHat);
-            } else {
-                holder.imgQLAnhBaiHat.setImageResource(R.drawable.album); // Ảnh mặc định
-            }
-
-            // Thiết lập sự kiện click cho nút xóa
-            holder.imgXoaBH.setOnClickListener(view -> showDeleteConfirmationDialog(baiHat));
+        // Load ảnh bằng Glide
+        if (baiHat.getHinhAnh() != null && !baiHat.getHinhAnh().isEmpty()) {
+            Glide.with(context)
+                    .load(baiHat.getHinhAnh())
+                    .placeholder(R.drawable.ic_launcher_background)
+                    .error(R.drawable.ic_launcher_background)
+                    .into(holder.imgHinh);
+        } else {
+            holder.imgHinh.setImageResource(R.drawable.ic_launcher_background);
         }
+
+        // --- XỬ LÝ SỰ KIỆN NÚT SỬA ---
+        holder.imgEdit.setOnClickListener(v -> {
+            Intent intent = new Intent(context, EditSongActivity.class);
+            // Truyền đối tượng BaiHat sang màn hình sửa
+            intent.putExtra("SONG_DATA", baiHat);
+
+            // Gọi startActivityForResult thông qua context (được ép kiểu về Activity)
+            // Request code 100 là một số ngẫu nhiên để định danh
+            ((Activity) context).startActivityForResult(intent, 100);
+        });
+
+        // --- XỬ LÝ SỰ KIỆN NÚT XÓA ---
+        holder.imgDelete.setOnClickListener(v -> {
+            showConfirmDeleteDialog(baiHat.getIdBH(), baiHat.getTenBH(), position);
+        });
 
         return convertView;
     }
 
-    /**
-     * Hiển thị hộp thoại xác nhận trước khi xóa bài hát.
-     */
-    private void showDeleteConfirmationDialog(BaiHat baiHat) {
+    // Hàm hiển thị hộp thoại xác nhận xóa
+    private void showConfirmDeleteDialog(String songId, String songName, int position) {
         new AlertDialog.Builder(context)
-                .setTitle("Xóa Bài hát")
-                .setMessage("Bạn thực sự muốn xóa bài hát '" + baiHat.getTenBH() + "'?")
-                .setPositiveButton("Có", (dialogInterface, i) -> {
-                    deleteSongFromFirestore(baiHat);
+                .setTitle("Xác nhận xóa")
+                .setMessage("Bạn có chắc muốn xóa bài hát \"" + songName + "\" không?")
+                .setPositiveButton("Xóa", (dialog, which) -> {
+                    deleteSongFromFirestore(songId, position);
                 })
-                .setNegativeButton("Không", null)
+                .setNegativeButton("Hủy", null)
                 .show();
     }
 
-    /**
-     * Xóa document bài hát khỏi collection "BaiHat" trên Firestore.
-     */
-    private void deleteSongFromFirestore(BaiHat baiHat) {
-        // === LỖI ĐÃ SỬA: Dùng getIdBH() để lấy ID của document ===
-        if (baiHat == null || baiHat.getIdBH() == null || baiHat.getIdBH().isEmpty()) {
-            Toast.makeText(context, "Lỗi: Không thể xác định bài hát để xóa.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        String songIdToDelete = baiHat.getIdBH();
-
-        firestore.collection("BaiHat").document(songIdToDelete)
+    // Hàm thực hiện xóa trên Firestore
+    private void deleteSongFromFirestore(String songId, int position) {
+        firestore.collection("BAI_HAT").document(songId)
                 .delete()
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Đã xóa bài hát: " + songIdToDelete);
-                    Toast.makeText(context, "Xóa bài hát thành công!", Toast.LENGTH_SHORT).show();
-
-                    // === LỖI ĐÃ SỬA: Gọi hàm load mới trong Activity ===
-                    // Cập nhật lại danh sách bằng cách gọi hàm public trong QuanLyBaiHatActivity
-                    if (context instanceof QuanLyBaiHatActivity) {
-                        ((QuanLyBaiHatActivity) context).loadSongsFromFirestore();
-                    }
+                    Toast.makeText(context, "Đã xóa bài hát thành công!", Toast.LENGTH_SHORT).show();
+                    // Xóa khỏi danh sách hiển thị để cập nhật giao diện ngay lập tức
+                    listBaiHat.remove(position);
+                    notifyDataSetChanged();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Lỗi khi xóa bài hát: ", e);
-                    Toast.makeText(context, "Xóa thất bại: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(context, "Lỗi khi xóa: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
-    }
-
-    // Lớp ViewHolder để tối ưu hiệu suất ListView
-    static class ViewHolder {
-        ImageView imgQLAnhBaiHat;
-        TextView tvQLTenBaiHat;
-        TextView tvQLTenCaSi;
-        ImageView imgXoaBH;
     }
 }
