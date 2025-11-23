@@ -1,145 +1,199 @@
 package com.example.baicuoiky_nhom13;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
+import android.util.Log;
+import android.view.View;import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
-import com.example.baicuoiky_nhom13.Activity.LoginActivity;
-import com.example.baicuoiky_nhom13.Model.NguoiDung;
+import com.bumptech.glide.Glide;
+import com.example.baicuoiky_nhom13.Adapter.BaiHatAdapter;
+import com.example.baicuoiky_nhom13.Model.BaiHat;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.QuerySnapshot;
+
+import java.util.ArrayList;
 
 public class TrangChuActivity extends AppCompatActivity {
 
-    // Khai báo các biến view khớp với XML
-    private ImageView imgProfile, imgTrangChu, imgSearch, imgThuVien, imgPhanHoi;
-    private TextView tvTenNguoiDung;
-    private CardView cvYeuThich;
-    private ListView lvBaiHat;
+    private static final String TAG = "TrangChuActivity";
 
-    // Biến dữ liệu người dùng
-    private NguoiDung currentUser;
+    // Khai báo View
+    ListView lvBaiHat;
+    TextView tvTenNguoiDung;
+    ImageView imgProfile;
+    CardView cvYeuThich;
+
+    // Khai báo dữ liệu
+    ArrayList<BaiHat> arrBaiHat;
+    BaiHatAdapter adapter;
+
+    // Khai báo Firebase
+    FirebaseFirestore db;
+    FirebaseAuth mAuth;
+    String currentUserId; // Có thể là Email hoặc UID tùy vào cách bạn lưu
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_trang_chu);
+        setContentView(R.layout.activity_trang_chu); // Đảm bảo tên file XML đúng
 
-        initViews();
-        loadUserDataFromIntent();
-        setupListeners();
-    }
+        // 1. Khởi tạo Firebase
+        db = FirebaseFirestore.getInstance();
+        mAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
 
-    private void initViews() {
-        // Ánh xạ ID từ file activity_trang_chu.xml
-        imgProfile = findViewById(R.id.imgProfile);
-        tvTenNguoiDung = findViewById(R.id.tvTenNguoiDung);
-        cvYeuThich = findViewById(R.id.cvYeuThich);
-        lvBaiHat = findViewById(R.id.lvBaiHat);
-
-        // Bottom Navigation Icons
-        imgTrangChu = findViewById(R.id.imgTrangChu);
-        imgSearch = findViewById(R.id.imgSearch);
-        imgThuVien = findViewById(R.id.ThuVien); // Chú ý: ID trong xml là ThuVien (viết hoa)
-        imgPhanHoi = findViewById(R.id.imgPhanHoi);
-    }
-
-    private void loadUserDataFromIntent() {
-        Intent intent = getIntent();
-
-        // Kiểm tra xem có dữ liệu 'nguoi_dung' gửi từ LoginActivity qua không
-        if (intent != null && intent.hasExtra("nguoi_dung")) {
-            // Ép kiểu về object NguoiDung (Yêu cầu class NguoiDung phải implements Serializable)
-            currentUser = (NguoiDung) intent.getSerializableExtra("nguoi_dung");
-        }
-
+        // Kiểm tra đăng nhập
         if (currentUser != null) {
-            // 1. Hiển thị tên người dùng
-            String name = currentUser.getHoTen();
-            if (name == null || name.isEmpty()) {
-                name = currentUser.getEmail(); // Nếu không có tên thì hiện email
-            }
-            tvTenNguoiDung.setText(name);
-
-            // 2. Kiểm tra quyền Admin
-            if ("admin".equalsIgnoreCase(currentUser.getVaiTro())) {
-                Toast.makeText(this, "Xin chào Quản trị viên: " + name, Toast.LENGTH_SHORT).show();
-                // Tại đây bạn có thể hiển thị thêm nút quản lý nếu muốn
-            }
+            // Do database bạn lưu ID là Email, nên ta lấy Email làm UserID để truyền vào Adapter
+            currentUserId = currentUser.getEmail();
         } else {
-            // Nếu vào trang chủ mà không có dữ liệu user (lỗi), đẩy về trang login
-            // Kiểm tra thêm Firebase Auth để chắc chắn
-            if (FirebaseAuth.getInstance().getCurrentUser() == null) {
-                dangXuat();
-            }
+            // Chưa đăng nhập -> Chuyển về màn hình Login (tùy bạn xử lý)
+            Toast.makeText(this, "Bạn chưa đăng nhập", Toast.LENGTH_SHORT).show();
+            // finish(); return; // Nếu muốn bắt buộc đăng nhập
         }
-    }
 
-    private void setupListeners() {
-        // 1. Sự kiện click vào Avatar (imgProfile) để Đăng xuất
-        imgProfile.setOnClickListener(new View.OnClickListener() {
+        // 2. Ánh xạ View
+        AnhXa();
+
+        // 3. Thiết lập ListView và Adapter
+        arrBaiHat = new ArrayList<>();
+        // Truyền currentUserId vào Adapter để xử lý chức năng Yêu thích
+        adapter = new BaiHatAdapter(this, R.layout.item_baihat, arrBaiHat, currentUserId);
+        lvBaiHat.setAdapter(adapter);
+
+        // 4. Hiển thị thông tin người dùng (Tên, Ảnh đại diện)
+        HienThiThongTinUser();
+
+        // 5. Lấy danh sách bài hát từ Firestore
+        LayDanhSachBaiHat();
+
+        // 6. Sự kiện click vào item trong ListView (Để phát nhạc)
+        lvBaiHat.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onClick(View v) {
-                showLogoutDialog();
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                BaiHat baiHatChon = arrBaiHat.get(position);
+
+                // Chuyển sang màn hình phát nhạc (PlayActivity)
+                // Intent intent = new Intent(TrangChuActivity.this, PlayActivity.class);
+                // intent.putExtra("baihat", baiHatChon); // Truyền object bài hát qua
+                // startActivity(intent);
+
+                Toast.makeText(TrangChuActivity.this, "Đã chọn: " + baiHatChon.getTenBH(), Toast.LENGTH_SHORT).show();
             }
         });
 
-        // 2. Sự kiện click vào Bài hát yêu thích
+        // 7. Sự kiện click vào CardView Yêu Thích
         cvYeuThich.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(TrangChuActivity.this, "Mở danh sách yêu thích", Toast.LENGTH_SHORT).show();
+                // Chuyển sang màn hình danh sách yêu thích
                 // Intent intent = new Intent(TrangChuActivity.this, YeuThichActivity.class);
                 // startActivity(intent);
+                Toast.makeText(TrangChuActivity.this, "Mở danh sách yêu thích", Toast.LENGTH_SHORT).show();
             }
         });
-
-        // 3. Sự kiện Bottom Navigation
-        imgSearch.setOnClickListener(v -> Toast.makeText(this, "Chức năng Tìm kiếm", Toast.LENGTH_SHORT).show());
-        imgThuVien.setOnClickListener(v -> Toast.makeText(this, "Chức năng Thư viện", Toast.LENGTH_SHORT).show());
-        imgPhanHoi.setOnClickListener(v -> Toast.makeText(this, "Chức năng Phản hồi", Toast.LENGTH_SHORT).show());
-
-        // List View Bài hát
-        // Bạn cần tạo Adapter để hiển thị dữ liệu lên lvBaiHat
     }
 
-    private void showLogoutDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Đăng xuất");
-        builder.setMessage("Bạn có chắc chắn muốn đăng xuất khỏi tài khoản " +
-                (currentUser != null ? currentUser.getEmail() : "") + "?");
-
-        builder.setPositiveButton("Đăng xuất", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dangXuat();
-            }
-        });
-
-        builder.setNegativeButton("Hủy", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-
-        builder.show();
+    private void AnhXa() {
+        lvBaiHat = findViewById(R.id.lvBaiHat);
+        tvTenNguoiDung = findViewById(R.id.tvTenNguoiDung);
+        imgProfile = findViewById(R.id.imgProfile);
+        cvYeuThich = findViewById(R.id.cvYeuThich);
     }
 
-    private void dangXuat() {
-        FirebaseAuth.getInstance().signOut();
-        Intent intent = new Intent(TrangChuActivity.this, LoginActivity.class);
-        // Xóa stack activity để không back lại được
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
+    private void HienThiThongTinUser() {
+        if (mAuth.getCurrentUser() != null) {
+            String email = mAuth.getCurrentUser().getEmail();
+
+            // Hiển thị tạm email lên tên người dùng
+            tvTenNguoiDung.setText(email);
+
+            // Nếu muốn lấy tên thật và avatar từ collection NGUOI_DUNG:
+            if (currentUserId != null) {
+                db.collection("NGUOI_DUNG").document(currentUserId)
+                        .get()
+                        .addOnSuccessListener(documentSnapshot -> {
+                            if (documentSnapshot.exists()) {
+                                String hoTen = documentSnapshot.getString("hoTen");
+                                // String avatarUrl = documentSnapshot.getString("avatar"); // Nếu có lưu avatar
+
+                                if (hoTen != null) tvTenNguoiDung.setText(hoTen);
+                                // if (avatarUrl != null) Glide.with(this).load(avatarUrl).into(imgProfile);
+                            }
+                        });
+            }
+        }
+    }
+
+    private void LayDanhSachBaiHat() {
+        // Lắng nghe thay đổi thực (Realtime) từ collection BAI_HAT
+        db.collection("BAI_HAT")
+                .addSnapshotListener(new EventListener<QuerySnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
+                        if (error != null) {
+                            Log.e(TAG, "Lỗi lắng nghe Firestore", error);
+                            return;
+                        }
+
+                        if (value != null) {
+                            // Dùng vòng lặp qua các thay đổi để tối ưu hiệu suất
+                            for (DocumentChange dc : value.getDocumentChanges()) {
+                                switch (dc.getType()) {
+                                    case ADDED:
+                                        // Khi có bài hát mới thêm vào DB
+                                        BaiHat baiHatMoi = dc.getDocument().toObject(BaiHat.class);
+                                        // Gán ID document vào object để dễ xử lý về sau
+                                        baiHatMoi.setIdBH(dc.getDocument().getId());
+                                        arrBaiHat.add(baiHatMoi);
+                                        break;
+
+                                    case MODIFIED:
+                                        // Khi có bài hát bị sửa -> Cập nhật lại list
+                                        // (Code đơn giản: clear list load lại, hoặc tìm index để replace)
+                                        // Ở đây mình làm đơn giản là clear load lại cho dễ hiểu:
+                                        arrBaiHat.clear();
+                                        for (DocumentChange refreshDc : value.getDocumentChanges()) {
+                                            if (refreshDc.getType() == DocumentChange.Type.ADDED || refreshDc.getType() == DocumentChange.Type.MODIFIED)
+                                                // Logic này cần viết lại full query nếu muốn update chuẩn
+                                                // Để đơn giản cho bài cuối kỳ, khi Modified ta có thể bỏ qua hoặc reload activity
+                                                break;
+                                        }
+                                        break;
+
+                                    case REMOVED:
+                                        // Xử lý xóa
+                                        break;
+                                }
+                            }
+
+                            // NẾU LÀM CÁCH ĐƠN GIẢN NHẤT (KHÔNG CẦN REALTIME TYPE):
+                            // Xóa list cũ, add toàn bộ list mới
+                            arrBaiHat.clear();
+                            for (com.google.firebase.firestore.DocumentSnapshot document : value.getDocuments()) {
+                                BaiHat bh = document.toObject(BaiHat.class);
+                                if (bh != null) {
+                                    bh.setIdBH(document.getId()); // Lấy ID document set vào object
+                                    arrBaiHat.add(bh);
+                                }
+                            }
+
+                            adapter.notifyDataSetChanged(); // Cập nhật giao diện
+                        }
+                    }
+                });
     }
 }

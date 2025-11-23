@@ -116,7 +116,7 @@ public class RegisterActivity extends AppCompatActivity {
         // Các trường khác như anhDaiDien có thể để trống và cập nhật sau
 
         // Mã hóa email để dùng làm ID cho document
-        String emailId = email.replace(".", ",");
+        String emailId = email;
         user.setId(emailId); // Gán luôn ID cho đối tượng
 
         // Lưu đối tượng user vào Firestore

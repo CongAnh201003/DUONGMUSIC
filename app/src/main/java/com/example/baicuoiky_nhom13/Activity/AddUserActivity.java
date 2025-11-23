@@ -110,7 +110,7 @@ public class AddUserActivity extends AppCompatActivity {
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
                         Log.d(TAG, "Tạo tài khoản Auth cho user mới thành công.");
-                        String emailId = emailMoi.replace(".", ",");
+                        String emailId = emailMoi;
                         String vaiTro = (selectedRoleId == R.id.rbAdmin) ? "admin" : "user";
                         saveUserToFirestore(emailId, hoTen, emailMoi, matKhau, vaiTro, adminEmail, adminPassword);
                     } else {

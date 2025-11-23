@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="10dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+
+    > <!-- Nền tối cho hợp theme -->
+
+    <!-- Ảnh bài hát -->
+    <ImageView
+        android:id="@+id/imgAnhBaiHat"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/album" /> <!-- Thay @drawable/album bằng ảnh mặc định của bạn -->
+
+    <!-- Thông tin bài hát -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginLeft="15dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvTenBaiHat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tên Bài Hát"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvTenCaSi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Ca Sĩ"
+            android:textColor="#B3B3B3"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- Nút thêm vào yêu thích -->
+    <ImageView
+        android:id="@+id/btnChonAnh"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:padding="5dp"
+        android:src="@android:drawable/ic_input_add"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Thêm vào yêu thích"
+        android:layout_marginRight="5dp"/>
+    <!-- Lưu ý: ID này phải trùng với code trong Adapter: holder.imgAdd = ...R.id.btnChonAnh -->
+
+</LinearLayout>

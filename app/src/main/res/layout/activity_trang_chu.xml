@@ -159,7 +159,7 @@
                 android:layout_weight="1"/>
             <ImageView
                 android:id="@+id/ThuVien"
-                android:src="@drawable/library"
+                android:src="@drawable/messages"
                 android:layout_marginTop="5dp"
                 android:layout_width="35dp"
                 android:layout_height="35dp"

@@ -89,7 +89,7 @@
             android:id="@+id/btnChonAnh"
             android:text="Chọn Ảnh"
             android:layout_marginStart="16dp"
-            android:backgroundTint="#FF9800"
+            android:backgroundTint="#A64D79"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
     </LinearLayout>
@@ -100,7 +100,7 @@
         android:text="Thêm Bài Hát"
         android:layout_marginTop="24dp"
         android:layout_gravity="center_horizontal"
-        android:backgroundTint="#4CAF50"
+        android:backgroundTint="#A64D79"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
 
