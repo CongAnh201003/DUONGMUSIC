@@ -51,23 +51,6 @@
                 android:backgroundTint="#FFFFFF"
                 android:layout_marginBottom="16dp"/>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Tên đăng nhập:"
-                android:textColor="#FFFFFF"
-                android:textSize="16sp"
-                android:layout_marginBottom="8dp" />
-
-            <EditText
-                android:id="@+id/edtTenDangNhap"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Nhập tên đăng nhập"
-                android:textColor="#FFFFFF"
-                android:inputType="text"
-                android:backgroundTint="#FFFFFF"
-                android:layout_marginBottom="16dp" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -102,7 +85,13 @@
                 android:textColor="#FFFFFF"
                 android:inputType="textEmailAddress"
                 android:backgroundTint="#FFFFFF"
-                android:layout_marginBottom="24dp"/>
+                android:layout_marginBottom="24dp"
+
+                android:focusable="false"
+                android:clickable="false"
+                android:cursorVisible="false"
+                android:alpha="0.5" />
+
 
             <Button
                 android:id="@+id/btnLuu"

@@ -10,204 +10,190 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
-import com.example.baicuoiky_nhom13.Model.NguoiDung;
+import com.bumptech.glide.Glide;
 import com.example.baicuoiky_nhom13.R;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.squareup.picasso.Picasso;
 
 public class ProfileUserActivity extends AppCompatActivity {
-    private static final String TAG = "ProfileUserActivity";
 
-    // Khai báo UI
+    // Khai báo View
     private ImageView imgQuayLai, imgAnhDaiDien;
-    // Bỏ tvTenDangNhap vì không còn dùng
-    private TextView tvTenNguoiDung, tvMatkhau, tvEmail;
+    private TextView tvTenNguoiDung, tvTenDangNhap, tvMatkhau, tvEmail;
+    // Thêm TextView cảnh báo xóa
+    private TextView tvCanhBaoXoa;
     private Button btnChinhSua, btnDangXuat, btnXoaTaiKhoan;
 
     // Khai báo Firebase
-    private FirebaseAuth firebaseAuth;
-    private FirebaseFirestore firestore;
-
-    // Đối tượng người dùng hiện tại
-    private NguoiDung nguoiDungHienTai;
-
-    // Launcher để nhận kết quả từ màn hình EditProfile
-    private final ActivityResultLauncher<Intent> editProfileLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> {
-                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                    // Cập nhật lại thông tin người dùng sau khi sửa thành công
-                    NguoiDung updatedUser = (NguoiDung) result.getData().getSerializableExtra("kq");
-                    if (updatedUser != null) {
-                        nguoiDungHienTai = updatedUser; // Cập nhật đối tượng hiện tại
-                        displayUserData(); // Hiển thị lại thông tin mới
-                        Toast.makeText(this, "Thông tin đã được cập nhật", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            }
-    );
+    private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
+    private String currentEmail;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Bỏ EdgeToEdge vì nó gây lỗi ở một số file khác của bạn
-        setContentView(R.layout.activity_profile_user);
-        applyWindowInsets();
+        setContentView(R.layout.activity_profile);
 
-        // Khởi tạo
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
+
         initViews();
-        initFirebase();
 
-        // Lấy dữ liệu người dùng được truyền từ Activity trước
-        if (getIntent().getExtras() != null) {
-            nguoiDungHienTai = (NguoiDung) getIntent().getExtras().get("nguoi_dung");
-            if (nguoiDungHienTai != null) {
-                displayUserData();
-            } else {
-                Toast.makeText(this, "Lỗi: Không nhận được dữ liệu người dùng.", Toast.LENGTH_LONG).show();
-                finish();
-            }
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser == null) {
+            Toast.makeText(this, "Vui lòng đăng nhập lại!", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
         }
+        currentEmail = currentUser.getEmail();
 
-        // Thiết lập sự kiện click
-        setupClickListeners();
+        loadUserData();
+        handleEvents();
     }
 
-    /**
-     * Hiển thị thông tin của người dùng lên giao diện.
-     */
-    private void displayUserData() {
-        if (nguoiDungHienTai == null) return;
+    private void initViews() {
+        imgQuayLai = findViewById(R.id.imgQuayLai);
+        imgAnhDaiDien = findViewById(R.id.imgAnhDaiDien);
+        tvTenNguoiDung = findViewById(R.id.tvTenNguoiDung);
+        tvTenDangNhap = findViewById(R.id.tvTenDangNhap);
+        tvMatkhau = findViewById(R.id.tvMatkhau);
+        tvEmail = findViewById(R.id.tvEmail);
 
-        tvTenNguoiDung.setText(nguoiDungHienTai.getHoTen());
-        tvEmail.setText(nguoiDungHienTai.getEmail());
-        tvMatkhau.setText(nguoiDungHienTai.getMatKhau());
+        // Ánh xạ View mới
+        tvCanhBaoXoa = findViewById(R.id.tvCanhBaoXoa);
 
-        // Không còn hiển thị tvTenDangNhap
+        btnChinhSua = findViewById(R.id.btnChinhSua);
+        btnDangXuat = findViewById(R.id.btnDangXuat);
+        btnXoaTaiKhoan = findViewById(R.id.btnXoaTaiKhoan);
+    }
 
-        // Dùng Picasso hoặc Glide để tải ảnh đại diện
-        String imageUrl = nguoiDungHienTai.getAnhDaiDien();
-        if (imageUrl != null && !imageUrl.isEmpty()) {
-            Picasso.get()
-                    .load(imageUrl)
-                    .placeholder(R.drawable.user) // Ảnh tạm thời khi đang tải
-                    .error(R.drawable.error_image) // Ảnh lỗi nếu không tải được
-                    .into(imgAnhDaiDien);
-        } else {
-            imgAnhDaiDien.setImageResource(R.drawable.user); // Ảnh mặc định
+    private void loadUserData() {
+        tvEmail.setText(currentEmail);
+
+        if (currentEmail != null) {
+            db.collection("NGUOI_DUNG").document(currentEmail)
+                    .get()
+                    .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                        @Override
+                        public void onSuccess(DocumentSnapshot documentSnapshot) {
+                            if (documentSnapshot.exists()) {
+                                String hoTen = documentSnapshot.getString("hoTen");
+                                String matKhau = documentSnapshot.getString("matKhau");
+                                String avatarUrl = documentSnapshot.getString("avatar");
+
+                                // Lấy vai trò
+                                String vaiTro = documentSnapshot.getString("vaiTro");
+
+                                // --- XỬ LÝ ẨN HIỆN NÚT XÓA ---
+                                if ("admin".equals(vaiTro)) {
+                                    // Nếu là admin thì ẩn đi
+                                    tvCanhBaoXoa.setVisibility(View.GONE);
+                                    btnXoaTaiKhoan.setVisibility(View.GONE);
+                                } else {
+                                    // Nếu không phải admin (là user) thì hiện lên
+                                    tvCanhBaoXoa.setVisibility(View.VISIBLE);
+                                    btnXoaTaiKhoan.setVisibility(View.VISIBLE);
+                                }
+                                // -------------------------------
+
+                                if (hoTen != null && !hoTen.isEmpty()) {
+                                    tvTenNguoiDung.setText(hoTen);
+                                    tvTenDangNhap.setText(hoTen);
+                                } else {
+                                    tvTenNguoiDung.setText("Chưa cập nhật");
+                                    tvTenDangNhap.setText("Chưa cập nhật");
+                                }
+
+                                if (matKhau != null) {
+                                    tvMatkhau.setText(matKhau);
+                                } else {
+                                    tvMatkhau.setText("******");
+                                }
+
+                                if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                                    try {
+                                        Glide.with(ProfileUserActivity.this)
+                                                .load(avatarUrl)
+                                                .placeholder(R.drawable.user)
+                                                .error(R.drawable.user)
+                                                .into(imgAnhDaiDien);
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                } else {
+                                    imgAnhDaiDien.setImageResource(R.drawable.user);
+                                }
+
+                            }
+                        }
+                    })
+                    .addOnFailureListener(e -> Toast.makeText(ProfileUserActivity.this, "Lỗi tải dữ liệu", Toast.LENGTH_SHORT).show());
         }
     }
 
-    /**
-     * Thiết lập các sự kiện click cho các nút.
-     */
-    private void setupClickListeners() {
+    private void handleEvents() {
         imgQuayLai.setOnClickListener(v -> finish());
 
+        // Code Đăng xuất đã sửa
         btnDangXuat.setOnClickListener(v -> {
-            firebaseAuth.signOut(); // Đăng xuất khỏi Firebase
-            Intent intent = new Intent(ProfileUserActivity.this, LoginActivity.class);
-            // Xóa hết các Activity cũ và mở màn hình Login
+            mAuth.signOut();
+            Toast.makeText(ProfileUserActivity.this, "Đăng xuất thành công", Toast.LENGTH_SHORT).show();
+
+            // Chuyển về LoginActivity và xóa stack
+            Intent intent = new Intent(ProfileUserActivity.this, com.example.baicuoiky_nhom13.Activity.LoginActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
             finish();
         });
 
-        btnXoaTaiKhoan.setOnClickListener(view -> showDeleteConfirmationDialog());
+        btnXoaTaiKhoan.setOnClickListener(v -> confirmDeleteAccount());
 
-        btnChinhSua.setOnClickListener(view -> {
-            Intent intentEdit = new Intent(ProfileUserActivity.this, EditProfileUserActivity.class);
-            intentEdit.putExtra("nguoi_dung", nguoiDungHienTai);
-            editProfileLauncher.launch(intentEdit);
+        btnChinhSua.setOnClickListener(v -> {
+            Intent intent = new Intent(ProfileUserActivity.this, com.example.baicuoiky_nhom13.Activity.EditProfileUserActivity.class);
+            startActivity(intent);
         });
     }
 
-    /**
-     * Hiển thị hộp thoại xác nhận trước khi xóa tài khoản.
-     */
-    private void showDeleteConfirmationDialog() {
+    private void confirmDeleteAccount() {
         new AlertDialog.Builder(this)
-                .setTitle("Xóa tài khoản")
-                .setMessage("Hành động này không thể hoàn tác. Bạn có chắc chắn muốn xóa tài khoản này vĩnh viễn không?")
-                .setPositiveButton("Xóa", (dialog, which) -> deleteUserAccount())
+                .setTitle("Xác nhận xóa")
+                .setMessage("Bạn có chắc chắn muốn xóa tài khoản? Dữ liệu sẽ mất vĩnh viễn.")
+                .setPositiveButton("Xóa", (dialog, which) -> deleteUser())
                 .setNegativeButton("Hủy", null)
-                .setIcon(android.R.drawable.ic_dialog_alert)
                 .show();
     }
 
-    /**
-     * Thực hiện xóa tài khoản người dùng trên cả Firestore và Firebase Authentication.
-     */
-    private void deleteUserAccount() {
-        FirebaseUser user = firebaseAuth.getCurrentUser();
-        String documentId = nguoiDungHienTai.getId();
-
-        if (user == null || documentId == null || documentId.isEmpty()) {
-            Toast.makeText(this, "Lỗi: Không thể xác thực người dùng.", Toast.LENGTH_SHORT).show();
-            return;
+    private void deleteUser() {
+        if (currentEmail != null) {
+            db.collection("NGUOI_DUNG").document(currentEmail)
+                    .delete()
+                    .addOnSuccessListener(unused -> {
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            user.delete()
+                                    .addOnCompleteListener(task -> {
+                                        if (task.isSuccessful()) {
+                                            Toast.makeText(ProfileUserActivity.this, "Đã xóa tài khoản!", Toast.LENGTH_SHORT).show();
+                                            // Chuyển về màn hình Login sau khi xóa
+                                            Intent intent = new Intent(ProfileUserActivity.this, com.example.baicuoiky_nhom13.Activity.LoginActivity.class);
+                                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                            startActivity(intent);
+                                            finish();
+                                        } else {
+                                            Toast.makeText(ProfileUserActivity.this, "Cần đăng nhập lại để xóa tài khoản.", Toast.LENGTH_LONG).show();
+                                        }
+                                    });
+                        }
+                    })
+                    .addOnFailureListener(e -> Toast.makeText(ProfileUserActivity.this, "Lỗi xóa dữ liệu Firestore", Toast.LENGTH_SHORT).show());
         }
-
-        // Bước 1: Xóa document trong Firestore
-        firestore.collection("NGUOI_DUNG").document(documentId).delete()
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Đã xóa dữ liệu người dùng trên Firestore.");
-                    // Bước 2: Xóa tài khoản trên Firebase Authentication
-                    user.delete()
-                            .addOnSuccessListener(aVoid2 -> {
-                                Toast.makeText(ProfileUserActivity.this, "Đã xóa tài khoản thành công.", Toast.LENGTH_SHORT).show();
-                                // Chuyển về màn hình đăng nhập
-                                Intent intent = new Intent(ProfileUserActivity.this, LoginActivity.class);
-                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                startActivity(intent);
-                                finish();
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.e(TAG, "Lỗi khi xóa tài khoản trên Authentication: ", e);
-                                // Lỗi này thường xảy ra do người dùng cần phải đăng nhập lại gần đây
-                                Toast.makeText(ProfileUserActivity.this, "Lỗi: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                            });
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Lỗi khi xóa dữ liệu trên Firestore: ", e);
-                    Toast.makeText(ProfileUserActivity.this, "Lỗi khi xóa dữ liệu: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                });
-    }
-
-    // --- Các hàm khởi tạo và hệ thống ---
-    private void initViews() {
-        imgQuayLai = findViewById(R.id.imgQuayLai);
-        imgAnhDaiDien = findViewById(R.id.imgAnhDaiDien);
-        tvTenNguoiDung = findViewById(R.id.tvTenNguoiDung);
-        tvEmail = findViewById(R.id.tvEmail);
-        tvMatkhau = findViewById(R.id.tvMatkhau);
-        btnChinhSua = findViewById(R.id.btnChinhSua);
-        btnDangXuat = findViewById(R.id.btnDangXuat);
-        btnXoaTaiKhoan = findViewById(R.id.btnXoaTaiKhoan);
-
-        // Bỏ tvTenDangNhap
-        // tvTenDangNhap=findViewById(R.id.tvTenDangNhap);
-    }
-
-    private void initFirebase() {
-        firebaseAuth = FirebaseAuth.getInstance();
-        firestore = FirebaseFirestore.getInstance();
-    }
-
-    private void applyWindowInsets() {
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
     }
 }

@@ -51,7 +51,7 @@
                 android:layout_height="50dp"
                 android:orientation="horizontal">
                 <TextView
-                    android:text="Tên đăng nhâp:"
+                    android:text="Họ và tên:"
                     android:layout_gravity="center_vertical"
                     android:textColor="#FFFFFF"
                     android:textSize="8pt"
@@ -62,7 +62,7 @@
                     android:layout_weight="1"/>
                 <TextView
                     android:id="@+id/tvTenDangNhap"
-                    android:text="Ten dang nhap"
+                    android:text="Ho và tên"
                     android:layout_gravity="center_vertical"
                     android:textColor="#FFFFFF"
                     android:textSize="8pt"
@@ -136,6 +136,7 @@
                 android:backgroundTint="#333333"
                 app:cornerRadius="50dp" />
             <TextView
+                android:id="@+id/tvCanhBaoXoa"
                 android:text="Bạn có muốn xóa tài khoản của mình ? có thì nhấp vào đây"
                 android:textStyle="bold"
                 android:layout_marginTop="20dp"

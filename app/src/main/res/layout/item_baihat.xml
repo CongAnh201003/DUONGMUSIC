@@ -43,16 +43,14 @@
             android:textSize="14sp" />
     </LinearLayout>
 
-    <!-- Nút thêm vào yêu thích -->
     <ImageView
         android:id="@+id/btnChonAnh"
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:padding="5dp"
-        android:src="@android:drawable/ic_input_add"
+        android:src="@drawable/not_like"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="Thêm vào yêu thích"
         android:layout_marginRight="5dp"/>
-    <!-- Lưu ý: ID này phải trùng với code trong Adapter: holder.imgAdd = ...R.id.btnChonAnh -->
 
 </LinearLayout>

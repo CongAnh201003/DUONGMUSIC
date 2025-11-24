@@ -15,6 +15,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.baicuoiky_nhom13.R;
+
 import java.util.Properties;
 
 import javax.mail.Authenticator;
@@ -26,9 +27,18 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
 public class PhanHoiActivity extends AppCompatActivity {
-    EditText edtEmailTo,edtSubject,edtContent;
+    EditText edtEmailTo, edtSubject, edtContent;
     Button btnSend;
     ImageView imgBack;
+
+    // Cấu hình email cố định
+    // Đây là tài khoản trung gian (Bot gửi thư)
+    final String FROM_EMAIL = "duongnvt2k5@gmail.com"; // email là email trung gian
+    final String FROM_PASSWORD = "lgzm nsba ipdi keky";
+
+    // Đây là tài khoản nhận thư (Admin)
+    final String TO_EMAIL = "stu735105023@hnue.edu.vn";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,12 +49,17 @@ public class PhanHoiActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        // ánh xạ
-        edtEmailTo=findViewById(R.id.edtEmailTo);
-        edtSubject=findViewById(R.id.edtSubject);
-        edtContent=findViewById(R.id.edtContent);
-        btnSend=findViewById(R.id.btnSend);
-        imgBack=findViewById(R.id.imgBack);
+
+        // Ánh xạ
+        edtEmailTo = findViewById(R.id.edtEmailTo);
+        edtSubject = findViewById(R.id.edtSubject);
+        edtContent = findViewById(R.id.edtContent);
+        btnSend = findViewById(R.id.btnSend);
+        imgBack = findViewById(R.id.imgBack);
+
+        // Thiết lập giao diện: Hiển thị nơi gửi đến nhưng không cho sửa
+        edtEmailTo.setText(TO_EMAIL);
+        edtEmailTo.setEnabled(false); // Khóa ô nhập liệu này lại
 
         imgBack.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -56,51 +71,75 @@ public class PhanHoiActivity extends AppCompatActivity {
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // Lấy dữ liệu người dùng nhập
+                String subject = edtSubject.getText().toString().trim();
+                String content = edtContent.getText().toString().trim();
+
+                // Kiểm tra dữ liệu rỗng
+                if (subject.isEmpty() || content.isEmpty()) {
+                    Toast.makeText(PhanHoiActivity.this, "Vui lòng nhập chủ đề và nội dung!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Bắt đầu gửi email
+                sendEmailBackground(subject, content);
+            }
+        });
+    }
+
+    private void sendEmailBackground(String subject, String content) {
+        // Hiển thị thông báo đang gửi (để người dùng biết app đang chạy)
+        Toast.makeText(PhanHoiActivity.this, "Đang gửi phản hồi...", Toast.LENGTH_SHORT).show();
+
+        Thread emailThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
                 try {
-                    String fromEmail="duongnvt2k5@gmail.com";
-                    String passWord="zyvewfenubsweskp";
-                    String toEmail=edtEmailTo.getText().toString().trim();
-                    String subject=edtSubject.getText().toString().trim();
-                    String content=edtContent.getText().toString().trim();
-                    String host="smtp.gmail.com";
-                    Properties properties=System.getProperties();
-                    properties.put("mail.smtp.host",host);
-                    properties.put("mail.smtp.port","465");
-                    properties.put("mail.smtp.ssl.enable",true);
-                    properties.put("mail.smtp.auth",true);
-                    Session session=Session.getInstance(properties, new Authenticator() {
+                    Properties properties = new Properties();
+                    properties.put("mail.smtp.host", "smtp.gmail.com");
+                    properties.put("mail.smtp.port", "465");
+                    properties.put("mail.smtp.ssl.enable", "true");
+                    properties.put("mail.smtp.auth", "true");
+
+                    Session session = Session.getInstance(properties, new Authenticator() {
                         @Override
                         protected PasswordAuthentication getPasswordAuthentication() {
-                            return new PasswordAuthentication(fromEmail,passWord);
+                            return new PasswordAuthentication(FROM_EMAIL, FROM_PASSWORD);
                         }
                     });
-                    MimeMessage mimeMessage=new MimeMessage(session);
-                    mimeMessage.addRecipients(Message.RecipientType.TO, String.valueOf(new InternetAddress(toEmail)));
+
+                    MimeMessage mimeMessage = new MimeMessage(session);
+                    // Người nhận cố định là stu735105023@gmail.com
+                    mimeMessage.addRecipients(Message.RecipientType.TO, InternetAddress.parse(TO_EMAIL));
                     mimeMessage.setSubject(subject);
                     mimeMessage.setText(content);
-                    Thread emailThread=new Thread(new Runnable() {
+
+                    // Thực hiện gửi
+                    Transport.send(mimeMessage);
+
+                    // Gửi thành công -> Cập nhật giao diện (Phải dùng runOnUiThread)
+                    runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            try {
-                                Transport.send(mimeMessage);
-                            }catch (Exception e){
-                                Log.d("Lỗi thread email", e.toString());
-                                Toast.makeText(PhanHoiActivity.this,
-                                        e.toString(),Toast.LENGTH_SHORT).show();
-                            }
+                            Toast.makeText(PhanHoiActivity.this, "Phản hồi đã được gửi thành công!", Toast.LENGTH_LONG).show();
+                            edtSubject.setText("");
+                            edtContent.setText("");
                         }
                     });
-                    emailThread.start();
-                    edtEmailTo.setText("");
-                    edtContent.setText("");
-                    edtSubject.setText("");
-                    Toast.makeText(PhanHoiActivity.this,"Phản hồi đã được gửi, cảm ơn bạn. ",Toast.LENGTH_SHORT).show();
-                }catch (Exception e){
-                    Log.d("Lỗi gửi email", e.toString());
-                    Toast.makeText(PhanHoiActivity.this,
-                            e.toString(),Toast.LENGTH_SHORT).show();
+
+                } catch (Exception e) {
+                    Log.e("Lỗi gửi email", e.toString());
+                    // Gửi thất bại -> Cập nhật giao diện
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(PhanHoiActivity.this, "Gửi thất bại. Vui lòng thử lại.", Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 }
             }
         });
+
+        emailThread.start();
     }
 }

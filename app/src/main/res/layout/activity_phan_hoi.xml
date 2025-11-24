@@ -48,7 +48,7 @@
             <EditText
                 android:id="@+id/edtEmailTo"
                 android:textColorHint="#CCC7C7"
-                android:hint="Nhập địa chỉ email người nhận"
+                android:hint="duongnvt2k5@gmail.com"
                 android:layout_width="match_parent"
                 android:textColor="#ffffff"
                 android:layout_height="wrap_content"/>
@@ -89,7 +89,7 @@
                 android:layout_height="wrap_content"/>
             <TextView
                 android:textColor="#ffffff"
-                android:text="Có thể gửi đến email: \n   duongnvt2k5@gmail.com"
+                android:text="Có thể gửi đến email: \n   stu735105023@hnue.edu.vn"
                 android:textSize="8pt"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>

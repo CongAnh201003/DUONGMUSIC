@@ -45,15 +45,30 @@ public class TrangChuActivity extends AppCompatActivity {
     FirebaseAuth mAuth;
     String currentUserId; // Có thể là Email hoặc UID tùy vào cách bạn lưu
 
+    ImageView imgSearch;
+
+    ImageView imgPhanHoi;
+
+    ImageView imgTinNhan;
+
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_trang_chu); // Đảm bảo tên file XML đúng
 
-        // 1. Khởi tạo Firebase
+        // 1. Khởi tạo
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = mAuth.getCurrentUser();
+        ImageView imgSearch = findViewById(R.id.imgSearch);
+        ImageView imgPhanHoi = findViewById(R.id.imgPhanHoi);
+        ImageView imgProfile = findViewById(R.id.imgProfile);
+        ImageView imgTinNhan = findViewById(R.id.imgTinNhan);
+
+
 
         // Kiểm tra đăng nhập
         if (currentUser != null) {
@@ -80,28 +95,75 @@ public class TrangChuActivity extends AppCompatActivity {
         // 5. Lấy danh sách bài hát từ Firestore
         LayDanhSachBaiHat();
 
-        // 6. Sự kiện click vào item trong ListView (Để phát nhạc)
+        // 6. Sự kiện click vào item trong ListView (Để mở link Youtube)
         lvBaiHat.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 BaiHat baiHatChon = arrBaiHat.get(position);
+                String youtubeLink = baiHatChon.getLinkBH();
 
-                // Chuyển sang màn hình phát nhạc (PlayActivity)
-                // Intent intent = new Intent(TrangChuActivity.this, PlayActivity.class);
-                // intent.putExtra("baihat", baiHatChon); // Truyền object bài hát qua
-                // startActivity(intent);
+                if (youtubeLink != null && !youtubeLink.isEmpty()) {
+                    try {
+                        // Tạo Intent để mở đường dẫn
+                        Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(youtubeLink));
+                        // Cờ này giúp mở ứng dụng Youtube nếu có, thay vì mở tab mới trong app
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                    } catch (Exception e) {
+                        // Phòng trường hợp link lỗi hoặc không có ứng dụng nào mở được link
+                        Toast.makeText(TrangChuActivity.this, "Lỗi: Không thể mở liên kết này", Toast.LENGTH_SHORT).show();
+                        e.printStackTrace();
+                    }
+                } else {
+                    Toast.makeText(TrangChuActivity.this, "Bài hát này chưa có link Youtube", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
 
-                Toast.makeText(TrangChuActivity.this, "Đã chọn: " + baiHatChon.getTenBH(), Toast.LENGTH_SHORT).show();
+        // 3. Bắt sự kiện click
+        imgSearch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Tạo lệnh chuyển từ TrangChuActivity sang SearchActivity
+                // Lưu ý: Nếu bạn để SearchActivity trong thư mục con Activity thì phải import đúng
+                Intent intent = new Intent(TrangChuActivity.this, com.example.baicuoiky_nhom13.Activity.SearchActivity.class);
+                startActivity(intent);
+            }
+        });
+
+
+        imgPhanHoi.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(TrangChuActivity.this, com.example.baicuoiky_nhom13.Activity.PhanHoiActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        imgProfile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(TrangChuActivity.this, com.example.baicuoiky_nhom13.Activity.ProfileUserActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        imgTinNhan.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(TrangChuActivity.this, com.example.baicuoiky_nhom13.Activity.ChatAIActivity.class);
+                startActivity(intent);
             }
         });
 
         // 7. Sự kiện click vào CardView Yêu Thích
+
         cvYeuThich.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Chuyển sang màn hình danh sách yêu thích
-                // Intent intent = new Intent(TrangChuActivity.this, YeuThichActivity.class);
-                // startActivity(intent);
+                // Chuyển sang màn hình YeuThichActivity
+                Intent intent = new Intent(TrangChuActivity.this, com.example.baicuoiky_nhom13.Activity.YeuThichActivity.class);
+                startActivity(intent);
                 Toast.makeText(TrangChuActivity.this, "Mở danh sách yêu thích", Toast.LENGTH_SHORT).show();
             }
         });
@@ -112,6 +174,9 @@ public class TrangChuActivity extends AppCompatActivity {
         tvTenNguoiDung = findViewById(R.id.tvTenNguoiDung);
         imgProfile = findViewById(R.id.imgProfile);
         cvYeuThich = findViewById(R.id.cvYeuThich);
+        imgSearch = findViewById(R.id.imgSearch);
+        imgPhanHoi = findViewById(R.id.imgPhanHoi);
+        imgProfile = findViewById(R.id.imgProfile);
     }
 
     private void HienThiThongTinUser() {
