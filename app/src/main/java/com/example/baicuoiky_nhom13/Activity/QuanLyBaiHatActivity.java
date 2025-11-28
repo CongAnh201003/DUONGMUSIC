@@ -3,13 +3,10 @@ package com.example.baicuoiky_nhom13.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -38,9 +35,6 @@ public class QuanLyBaiHatActivity extends AppCompatActivity {
     private ArrayList<BaiHat> listBaiHat;
     private FirebaseFirestore firestore;
 
-    // Launcher để nhận kết quả từ màn hình Thêm/Sửa (reload list khi quay về)
-    private ActivityResultLauncher<Intent> addEditSongLauncher;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,12 +47,20 @@ public class QuanLyBaiHatActivity extends AppCompatActivity {
         initViews();
         initFirebase();
         initListView();
-        initLauncher();
 
-        // Tải dữ liệu và cài đặt sự kiện
-        loadSongsFromFirestore();
+        // Cài đặt sự kiện click (nhưng chưa gọi loadSongsFromFirestore ở đây)
         setupClickListeners();
     }
+
+    // --- QUAN TRỌNG: CẬP NHẬT DỮ LIỆU KHI MÀN HÌNH HIỆN LÊN ---
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Bất kể khi nào quay lại màn hình này (từ Edit, từ Add, hay mở lại app)
+        // Hàm này sẽ chạy để tải dữ liệu mới nhất từ server.
+        loadSongsFromFirestore();
+    }
+    // ---------------------------------------------------------
 
     // --- Hàm khởi tạo View ---
     private void initViews() {
@@ -75,42 +77,36 @@ public class QuanLyBaiHatActivity extends AppCompatActivity {
     // --- Hàm khởi tạo ListView và Adapter ---
     private void initListView() {
         listBaiHat = new ArrayList<>();
-        // Lưu ý: R.layout.lv_quanly_baihat là layout của từng dòng item (bạn cần tạo file này)
+        // Lưu ý: R.layout.layout_item_baihat là layout của từng dòng item
         quanLyBHAdapter = new QuanLyBHAdapter(this, R.layout.layout_item_baihat, listBaiHat);
         lvQlBaiHat.setAdapter(quanLyBHAdapter);
     }
 
-    // --- Khởi tạo Launcher để reload list khi thêm/sửa xong ---
-    private void initLauncher() {
-        addEditSongLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result.getResultCode() == RESULT_OK) {
-                        // Nếu Thêm hoặc Sửa thành công thì tải lại danh sách
-                        loadSongsFromFirestore();
-                    }
-                });
-    }
-
     // --- Hàm tải dữ liệu từ Firestore ---
     public void loadSongsFromFirestore() {
-        // Hiển thị thông báo hoặc ProgressBar nếu cần
-        // ...
+        // Có thể thêm ProgressBar show() ở đây nếu muốn
 
         firestore.collection("BAI_HAT") // Tên Collection phải khớp với Database
-                .orderBy("tenBH", Query.Direction.ASCENDING) // Sắp xếp theo tên bài hát
+                .orderBy("tenBH", Query.Direction.ASCENDING) // Sắp xếp theo tên bài hát A-Z
                 .get()
                 .addOnCompleteListener(task -> {
+                    // Kiểm tra Activity còn sống không để tránh crash
+                    if (isFinishing() || isDestroyed()) return;
+
                     if (task.isSuccessful() && task.getResult() != null) {
-                        listBaiHat.clear();
+                        listBaiHat.clear(); // Xóa list cũ để nạp list mới
                         for (QueryDocumentSnapshot document : task.getResult()) {
-                            // Chuyển document thành Object BaiHat
-                            BaiHat baiHat = document.toObject(BaiHat.class);
-                            // Gán ID document vào object để sau này dùng cho Sửa/Xóa
-                            baiHat.setIdBH(document.getId());
-                            listBaiHat.add(baiHat);
+                            try {
+                                // Chuyển document thành Object BaiHat
+                                BaiHat baiHat = document.toObject(BaiHat.class);
+                                // Gán ID document vào object để sau này dùng cho Sửa/Xóa
+                                baiHat.setIdBH(document.getId());
+                                listBaiHat.add(baiHat);
+                            } catch (Exception e) {
+                                Log.e(TAG, "Lỗi parse dữ liệu bài hát: " + e.getMessage());
+                            }
                         }
-                        quanLyBHAdapter.notifyDataSetChanged();
+                        quanLyBHAdapter.notifyDataSetChanged(); // Cập nhật giao diện
                     } else {
                         Log.e(TAG, "Lỗi tải danh sách: ", task.getException());
                         Toast.makeText(this, "Không tải được dữ liệu bài hát.", Toast.LENGTH_SHORT).show();
@@ -126,22 +122,20 @@ public class QuanLyBaiHatActivity extends AppCompatActivity {
         // 2. Nút Thêm bài hát (+)
         fabThemBaiHat.setOnClickListener(v -> {
             Intent intent = new Intent(QuanLyBaiHatActivity.this, AddSongActivity.class);
-            // Sử dụng launcher để khi Add xong quay lại sẽ tự reload list
-            addEditSongLauncher.launch(intent);
+            startActivity(intent);
+            // Không cần finish(), khi thêm xong quay lại -> onResume chạy -> load lại list
         });
 
         // 3. Click vào item trong List để Sửa (Update)
         lvQlBaiHat.setOnItemClickListener((parent, view, position, id) -> {
             BaiHat selectedSong = listBaiHat.get(position);
 
-            // Chuyển sang màn hình Sửa (ví dụ EditSongActivity) hoặc dùng lại AddSongActivity với cờ edit
-            // Ở đây giả sử bạn muốn dùng AddSongActivity để sửa luôn (cần update logic bên đó)
-            // Hoặc tạo Activity mới là EditSongActivity
-
-            Intent intent = new Intent(QuanLyBaiHatActivity.this, EditSongActivity.class); // Bạn cần tạo Activity này
+            Intent intent = new Intent(QuanLyBaiHatActivity.this, EditSongActivity.class);
             intent.putExtra("SONG_ID", selectedSong.getIdBH());
-            intent.putExtra("SONG_DATA", selectedSong); // Class BaiHat cần implements Serializable
-            addEditSongLauncher.launch(intent);
+            // Class BaiHat đã implements Serializable nên truyền object thoải mái
+            intent.putExtra("SONG_DATA", selectedSong);
+            startActivity(intent);
+            // Không cần finish(), khi sửa xong quay lại -> onResume chạy -> load lại list
         });
     }
 

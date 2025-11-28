@@ -1,23 +1,18 @@
 package com.example.baicuoiky_nhom13.Activity;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 import com.example.baicuoiky_nhom13.R;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -28,8 +23,7 @@ public class ProfileUserActivity extends AppCompatActivity {
     // Khai báo View
     private ImageView imgQuayLai, imgAnhDaiDien;
     private TextView tvTenNguoiDung, tvTenDangNhap, tvMatkhau, tvEmail;
-    // Thêm TextView cảnh báo xóa
-    private TextView tvCanhBaoXoa;
+    private TextView tvCanhBaoXoa; // Thêm TextView cảnh báo xóa
     private Button btnChinhSua, btnDangXuat, btnXoaTaiKhoan;
 
     // Khai báo Firebase
@@ -42,22 +36,38 @@ public class ProfileUserActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
+        // 1. Khởi tạo Firebase
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
+        // 2. Ánh xạ View
         initViews();
+
+        // 3. Xử lý sự kiện
+        handleEvents();
+
+        // LƯU Ý: Không gọi loadUserData() ở đây nữa
+        // Nó sẽ được gọi trong onResume()
+    }
+
+    // --- PHẦN QUAN TRỌNG: CẬP NHẬT DỮ LIỆU KHI QUAY LẠI TỪ MÀN HÌNH EDIT ---
+    @Override
+    protected void onResume() {
+        super.onResume();
 
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) {
-            Toast.makeText(this, "Vui lòng đăng nhập lại!", Toast.LENGTH_SHORT).show();
+            // Nếu chưa đăng nhập -> Đăng xuất ra Login
             finish();
             return;
         }
+
         currentEmail = currentUser.getEmail();
 
+        // Gọi hàm tải dữ liệu mỗi khi màn hình hiện lên
         loadUserData();
-        handleEvents();
     }
+    // -----------------------------------------------------------------------
 
     private void initViews() {
         imgQuayLai = findViewById(R.id.imgQuayLai);
@@ -66,8 +76,6 @@ public class ProfileUserActivity extends AppCompatActivity {
         tvTenDangNhap = findViewById(R.id.tvTenDangNhap);
         tvMatkhau = findViewById(R.id.tvMatkhau);
         tvEmail = findViewById(R.id.tvEmail);
-
-        // Ánh xạ View mới
         tvCanhBaoXoa = findViewById(R.id.tvCanhBaoXoa);
 
         btnChinhSua = findViewById(R.id.btnChinhSua);
@@ -77,85 +85,74 @@ public class ProfileUserActivity extends AppCompatActivity {
 
     private void loadUserData() {
         tvEmail.setText(currentEmail);
+        // Luôn hiển thị ẩn mật khẩu vì lý do bảo mật
+        tvMatkhau.setText("******");
 
         if (currentEmail != null) {
             db.collection("NGUOI_DUNG").document(currentEmail)
                     .get()
-                    .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-                        @Override
-                        public void onSuccess(DocumentSnapshot documentSnapshot) {
-                            if (documentSnapshot.exists()) {
-                                String hoTen = documentSnapshot.getString("hoTen");
-                                String matKhau = documentSnapshot.getString("matKhau");
-                                String avatarUrl = documentSnapshot.getString("avatar");
+                    .addOnSuccessListener(documentSnapshot -> {
+                        // Kiểm tra Activity còn sống không
+                        if (isFinishing() || isDestroyed()) return;
 
-                                // Lấy vai trò
-                                String vaiTro = documentSnapshot.getString("vaiTro");
+                        if (documentSnapshot.exists()) {
+                            String hoTen = documentSnapshot.getString("hoTen");
+                            String avatarUrl = documentSnapshot.getString("avatar");
+                            String vaiTro = documentSnapshot.getString("vaiTro");
 
-                                // --- XỬ LÝ ẨN HIỆN NÚT XÓA ---
-                                if ("admin".equals(vaiTro)) {
-                                    // Nếu là admin thì ẩn đi
-                                    tvCanhBaoXoa.setVisibility(View.GONE);
-                                    btnXoaTaiKhoan.setVisibility(View.GONE);
-                                } else {
-                                    // Nếu không phải admin (là user) thì hiện lên
-                                    tvCanhBaoXoa.setVisibility(View.VISIBLE);
-                                    btnXoaTaiKhoan.setVisibility(View.VISIBLE);
-                                }
-                                // -------------------------------
+                            // --- Xử lý ẩn hiện nút xóa theo vai trò ---
+                            if ("admin".equals(vaiTro)) {
+                                tvCanhBaoXoa.setVisibility(View.GONE);
+                                btnXoaTaiKhoan.setVisibility(View.GONE);
+                            } else {
+                                tvCanhBaoXoa.setVisibility(View.VISIBLE);
+                                btnXoaTaiKhoan.setVisibility(View.VISIBLE);
+                            }
 
-                                if (hoTen != null && !hoTen.isEmpty()) {
-                                    tvTenNguoiDung.setText(hoTen);
-                                    tvTenDangNhap.setText(hoTen);
-                                } else {
-                                    tvTenNguoiDung.setText("Chưa cập nhật");
-                                    tvTenDangNhap.setText("Chưa cập nhật");
-                                }
+                            // --- Cập nhật tên ---
+                            if (hoTen != null && !hoTen.isEmpty()) {
+                                tvTenNguoiDung.setText(hoTen);
+                                tvTenDangNhap.setText(hoTen);
+                            } else {
+                                tvTenNguoiDung.setText("Chưa cập nhật");
+                                tvTenDangNhap.setText("Chưa cập nhật");
+                            }
 
-                                if (matKhau != null) {
-                                    tvMatkhau.setText(matKhau);
-                                } else {
-                                    tvMatkhau.setText("******");
-                                }
-
-                                if (avatarUrl != null && !avatarUrl.isEmpty()) {
-                                    try {
-                                        Glide.with(ProfileUserActivity.this)
-                                                .load(avatarUrl)
-                                                .placeholder(R.drawable.user)
-                                                .error(R.drawable.user)
-                                                .into(imgAnhDaiDien);
-                                    } catch (Exception e) {
-                                        e.printStackTrace();
-                                    }
-                                } else {
-                                    imgAnhDaiDien.setImageResource(R.drawable.user);
-                                }
-
+                            // --- Cập nhật ảnh ---
+                            if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                                Glide.with(ProfileUserActivity.this)
+                                        .load(avatarUrl)
+                                        .placeholder(R.drawable.user)
+                                        .error(R.drawable.user)
+                                        .circleCrop() // Cắt tròn ảnh
+                                        .into(imgAnhDaiDien);
+                            } else {
+                                imgAnhDaiDien.setImageResource(R.drawable.user);
                             }
                         }
                     })
-                    .addOnFailureListener(e -> Toast.makeText(ProfileUserActivity.this, "Lỗi tải dữ liệu", Toast.LENGTH_SHORT).show());
+                    .addOnFailureListener(e -> {
+                        if (!isFinishing()) {
+                            Toast.makeText(ProfileUserActivity.this, "Lỗi tải dữ liệu", Toast.LENGTH_SHORT).show();
+                        }
+                    });
         }
     }
 
     private void handleEvents() {
         imgQuayLai.setOnClickListener(v -> finish());
 
-        // Code Đăng xuất đã sửa
+        // Nút Đăng xuất
         btnDangXuat.setOnClickListener(v -> {
             mAuth.signOut();
             Toast.makeText(ProfileUserActivity.this, "Đăng xuất thành công", Toast.LENGTH_SHORT).show();
-
-            // Chuyển về LoginActivity và xóa stack
-            Intent intent = new Intent(ProfileUserActivity.this, com.example.baicuoiky_nhom13.Activity.LoginActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            finish();
+            navigateToLogin();
         });
 
+        // Nút Xóa tài khoản
         btnXoaTaiKhoan.setOnClickListener(v -> confirmDeleteAccount());
 
+        // Nút Chỉnh sửa -> Chuyển sang màn hình Edit
         btnChinhSua.setOnClickListener(v -> {
             Intent intent = new Intent(ProfileUserActivity.this, com.example.baicuoiky_nhom13.Activity.EditProfileUserActivity.class);
             startActivity(intent);
@@ -172,28 +169,38 @@ public class ProfileUserActivity extends AppCompatActivity {
     }
 
     private void deleteUser() {
+        // Khóa nút để tránh bấm nhiều lần
+        btnXoaTaiKhoan.setEnabled(false);
+
         if (currentEmail != null) {
-            db.collection("NGUOI_DUNG").document(currentEmail)
-                    .delete()
-                    .addOnSuccessListener(unused -> {
-                        FirebaseUser user = mAuth.getCurrentUser();
-                        if (user != null) {
-                            user.delete()
-                                    .addOnCompleteListener(task -> {
-                                        if (task.isSuccessful()) {
-                                            Toast.makeText(ProfileUserActivity.this, "Đã xóa tài khoản!", Toast.LENGTH_SHORT).show();
-                                            // Chuyển về màn hình Login sau khi xóa
-                                            Intent intent = new Intent(ProfileUserActivity.this, com.example.baicuoiky_nhom13.Activity.LoginActivity.class);
-                                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                            startActivity(intent);
-                                            finish();
-                                        } else {
-                                            Toast.makeText(ProfileUserActivity.this, "Cần đăng nhập lại để xóa tài khoản.", Toast.LENGTH_LONG).show();
-                                        }
-                                    });
-                        }
-                    })
-                    .addOnFailureListener(e -> Toast.makeText(ProfileUserActivity.this, "Lỗi xóa dữ liệu Firestore", Toast.LENGTH_SHORT).show());
+            FirebaseUser user = mAuth.getCurrentUser();
+            if (user != null) {
+                // 1. Xóa Auth User trước (Quan trọng hơn về bảo mật)
+                user.delete()
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                // 2. Nếu xóa Auth thành công -> Xóa dữ liệu Firestore
+                                db.collection("NGUOI_DUNG").document(currentEmail)
+                                        .delete()
+                                        .addOnSuccessListener(unused -> {
+                                            Toast.makeText(ProfileUserActivity.this, "Đã xóa tài khoản vĩnh viễn!", Toast.LENGTH_SHORT).show();
+                                            navigateToLogin();
+                                        });
+                            } else {
+                                // Lỗi xóa Auth (thường do cần đăng nhập lại)
+                                btnXoaTaiKhoan.setEnabled(true);
+                                Toast.makeText(ProfileUserActivity.this, "Bảo mật: Vui lòng đăng xuất và đăng nhập lại để thực hiện xóa tài khoản.", Toast.LENGTH_LONG).show();
+                            }
+                        });
+            }
         }
+    }
+
+    private void navigateToLogin() {
+        // Chuyển về LoginActivity và xóa toàn bộ stack Activity cũ
+        Intent intent = new Intent(ProfileUserActivity.this, com.example.baicuoiky_nhom13.Activity.LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 }

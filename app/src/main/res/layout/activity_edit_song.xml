@@ -84,7 +84,7 @@
             android:id="@+id/btnChonAnhEdit"
             android:text="Chọn Ảnh"
             android:layout_marginStart="16dp"
-            android:backgroundTint="#FF9800"
+            android:backgroundTint="#A64D79"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
     </LinearLayout>
@@ -94,7 +94,7 @@
         android:text="Lưu Thay Đổi"
         android:layout_marginTop="30dp"
         android:layout_gravity="center_horizontal"
-        android:backgroundTint="#2196F3"
+        android:backgroundTint="#A64D79"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
 
