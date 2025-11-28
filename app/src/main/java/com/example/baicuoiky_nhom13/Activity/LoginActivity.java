@@ -14,7 +14,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.baicuoiky_nhom13.Model.NguoiDung;
 import com.example.baicuoiky_nhom13.R;
-import com.example.baicuoiky_nhom13.TrangChuActivity;
 import com.example.baicuoiky_nhom13.Activity.TrangQuanLyOfAdminActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -155,7 +154,7 @@ public class LoginActivity extends AppCompatActivity {
             intent = new Intent(LoginActivity.this, TrangQuanLyOfAdminActivity.class);
         } else {
             Log.d("Login", "User is Normal -> Go to Home");
-            intent = new Intent(LoginActivity.this, TrangChuActivity.class);
+            intent = new Intent(LoginActivity.this, com.example.baicuoiky_nhom13.TrangChuActivity.class);
         }
 
         intent.putExtra("nguoi_dung", user);

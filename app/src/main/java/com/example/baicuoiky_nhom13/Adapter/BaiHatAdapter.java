@@ -1,6 +1,8 @@
 package com.example.baicuoiky_nhom13.Adapter;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,41 +19,36 @@ import com.bumptech.glide.Glide;
 import com.example.baicuoiky_nhom13.Model.BaiHat;
 import com.example.baicuoiky_nhom13.R;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 
 public class BaiHatAdapter extends ArrayAdapter<BaiHat> {
-    private static final String TAG = "BaiHatAdapter";
     private Activity context;
     private int resource;
     private ArrayList<BaiHat> listBaiHat;
-
     private FirebaseFirestore firestore;
     private String userId;
-
-    // Biến này dùng để biết adapter đang được dùng ở đâu
     private boolean isFavoriteList = false;
 
-    // Constructor 1: Dùng cho Trang Chủ
     public BaiHatAdapter(Activity context, int resource, ArrayList<BaiHat> listBaiHat, String userId) {
         super(context, resource, listBaiHat);
         this.context = context;
         this.resource = resource;
         this.listBaiHat = listBaiHat;
-        this.firestore = FirebaseFirestore.getInstance();
         this.userId = userId;
-        this.isFavoriteList = false; // Mặc định là false (Trang chủ)
+        this.firestore = FirebaseFirestore.getInstance();
+        this.isFavoriteList = false;
     }
 
-    // Constructor 2: Dùng cho màn hình Yêu Thích (truyền true để ẩn nút tim hoặc xử lý khác)
     public BaiHatAdapter(Activity context, int resource, ArrayList<BaiHat> listBaiHat, String userId, boolean isFavoriteList) {
         super(context, resource, listBaiHat);
         this.context = context;
         this.resource = resource;
         this.listBaiHat = listBaiHat;
-        this.firestore = FirebaseFirestore.getInstance();
         this.userId = userId;
+        this.firestore = FirebaseFirestore.getInstance();
         this.isFavoriteList = isFavoriteList;
     }
 
@@ -78,41 +75,45 @@ public class BaiHatAdapter extends ArrayAdapter<BaiHat> {
             holder.tvTenBaiHat.setText(baiHat.getTenBH());
             holder.tvTenCaSi.setText(baiHat.getTenCaSi());
 
-            // Load ảnh bài hát
             if (baiHat.getHinhAnh() != null && !baiHat.getHinhAnh().isEmpty()) {
-                Glide.with(context).load(baiHat.getHinhAnh()).into(holder.imgAnhBaiHat);
+                Glide.with(context).load(baiHat.getHinhAnh()).placeholder(R.drawable.user).into(holder.imgAnhBaiHat);
             } else {
-                holder.imgAnhBaiHat.setImageResource(R.drawable.album);
+                holder.imgAnhBaiHat.setImageResource(R.drawable.user);
             }
 
-            // --- XỬ LÝ NÚT TIM (LIKE/UNLIKE) ---
-            if (isFavoriteList) {
-                // 1. Nếu đang ở màn hình Yêu Thích:
-                // Bạn có thể chọn: Ẩn nút đi HOẶC hiện nút Xóa.
-                // Ở đây mình chọn Ẩn đi cho gọn, hoặc bạn có thể hiện tim đỏ luôn.
+            // --- Xử lý nút Yêu thích ---
+            if (userId == null) {
                 holder.imgFavorite.setVisibility(View.GONE);
-
             } else {
-                // 2. Nếu ở Trang Chủ:
                 holder.imgFavorite.setVisibility(View.VISIBLE);
-
-                // Kiểm tra trạng thái bài hát để set icon ban đầu (Đỏ hay Trắng)
                 checkFavoriteStatus(baiHat.getIdBH(), holder.imgFavorite);
-
-                // Bắt sự kiện bấm vào tim
-                holder.imgFavorite.setOnClickListener(view -> {
-                    toggleFavorite(baiHat, holder.imgFavorite);
-                });
+                holder.imgFavorite.setOnClickListener(v -> toggleFavorite(baiHat, holder.imgFavorite));
             }
-        }
 
+            // --- QUAN TRỌNG: CLICK VÀO ITEM ĐỂ MỞ YOUTUBE VÀ TĂNG VIEW ---
+            convertView.setOnClickListener(v -> {
+                // 1. Tăng view trên Firebase (Chạy ngầm)
+                if (baiHat.getIdBH() != null) {
+                    firestore.collection("BAI_HAT").document(baiHat.getIdBH())
+                            .update("luotXem", FieldValue.increment(1))
+                            .addOnFailureListener(e -> Log.e("Ranking", "Lỗi tăng view: " + e.getMessage()));
+                }
+
+                // 2. Mở Youtube
+                try {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(baiHat.getLinkBH()));
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(intent);
+                } catch (Exception e) {
+                    Toast.makeText(context, "Không thể mở link bài hát: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
         return convertView;
     }
 
-    // Hàm kiểm tra trạng thái (Tim đỏ hay trắng) khi mới load danh sách
     private void checkFavoriteStatus(String baiHatId, ImageView icon) {
         if (userId == null || baiHatId == null) return;
-
         firestore.collection("NGUOI_DUNG").document(userId)
                 .collection("YeuThich").document(baiHatId)
                 .get()
@@ -126,42 +127,25 @@ public class BaiHatAdapter extends ArrayAdapter<BaiHat> {
                         icon.setImageResource(R.drawable.not_like);
                         icon.setTag("unliked");
                     }
-                })
-                .addOnFailureListener(e -> {
-                    // Lỗi thì cứ để mặc định là chưa thích
-                    icon.setImageResource(R.drawable.not_like);
-                    icon.setTag("unliked");
                 });
     }
 
-    // Hàm xử lý: Thích hoặc Bỏ thích khi bấm vào
     private void toggleFavorite(BaiHat baiHat, ImageView icon) {
-        if (userId == null) {
-            Toast.makeText(context, "Vui lòng đăng nhập!", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        String status = (String) icon.getTag(); // Lấy trạng thái hiện tại
+        String status = (String) icon.getTag();
         DocumentReference docRef = firestore.collection("NGUOI_DUNG").document(userId)
                 .collection("YeuThich").document(baiHat.getIdBH());
 
         if ("liked".equals(status)) {
-            // Đang thích -> Bấm vào là BỎ THÍCH (Xóa khỏi DB)
             docRef.delete().addOnSuccessListener(aVoid -> {
                 icon.setImageResource(R.drawable.not_like); // Đổi về tim trắng
                 icon.setTag("unliked");
-                Toast.makeText(context, "Đã xóa khỏi yêu thích", Toast.LENGTH_SHORT).show();
-            }).addOnFailureListener(e -> {
-                Toast.makeText(context, "Lỗi xóa: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Đã bỏ thích", Toast.LENGTH_SHORT).show();
             });
         } else {
-            // Chưa thích -> Bấm vào là THÍCH (Thêm vào DB)
             docRef.set(baiHat).addOnSuccessListener(aVoid -> {
                 icon.setImageResource(R.drawable.like); // Đổi thành tim đỏ
                 icon.setTag("liked");
                 Toast.makeText(context, "Đã thêm vào yêu thích", Toast.LENGTH_SHORT).show();
-            }).addOnFailureListener(e -> {
-                Toast.makeText(context, "Lỗi thêm: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             });
         }
     }
@@ -170,6 +154,6 @@ public class BaiHatAdapter extends ArrayAdapter<BaiHat> {
         ImageView imgAnhBaiHat;
         TextView tvTenBaiHat;
         TextView tvTenCaSi;
-        ImageView imgFavorite; // Đổi tên biến cho dễ hiểu (trước là imgAdd)
+        ImageView imgFavorite;
     }
 }

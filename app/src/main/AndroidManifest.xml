@@ -65,6 +65,9 @@
             android:name=".Activity.ChatAIActivity"
             android:exported="false" />
         <activity
+            android:name=".Activity.BangXepHangActivity"
+            android:exported="false" />
+        <activity
             android:name=".Activity.LoginActivity"
             android:exported="true">
             <intent-filter>
