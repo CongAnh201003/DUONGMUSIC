@@ -37,7 +37,7 @@ public class TrangChuActivity extends AppCompatActivity {
     // Khai báo View
     ListView lvBaiHat;
     TextView tvTenNguoiDung;
-    ImageView imgProfile, imgSearch, imgPhanHoi, imgTinNhan, imgBXH;
+    ImageView imgProfile, imgSearch, imgPhanHoi, imgBXH;
     CardView cvYeuThich;
 
     // Khai báo dữ liệu
@@ -123,8 +123,6 @@ public class TrangChuActivity extends AppCompatActivity {
         imgPhanHoi = findViewById(R.id.imgPhanHoi);
         imgBXH = findViewById(R.id.imgBXH);
 
-        // QUAN TRỌNG: Đã mở comment dòng này để tránh lỗi Crash
-        imgTinNhan = findViewById(R.id.imgTinNhan);
     }
 
     private void setupClickEvents() {
@@ -140,11 +138,6 @@ public class TrangChuActivity extends AppCompatActivity {
 
         imgProfile.setOnClickListener(v -> {
             Intent intent = new Intent(TrangChuActivity.this, com.example.baicuoiky_nhom13.Activity.ProfileUserActivity.class);
-            startActivity(intent);
-        });
-
-        imgTinNhan.setOnClickListener(v -> {
-            Intent intent = new Intent(TrangChuActivity.this, com.example.baicuoiky_nhom13.Activity.ChatAIActivity.class);
             startActivity(intent);
         });
 

@@ -1,56 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="10dp"
-    android:gravity="center_vertical"
     android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="10dp"
+>
+    <!-- 1. SỐ THỨ TỰ (Mặc định ẩn đi bằng visibility="gone") -->
+    <TextView
+        android:id="@+id/tvRank"
+        android:layout_width="30dp"
+        android:layout_height="wrap_content"
+        android:text="1"
+        android:textColor="#FFD700"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginEnd="10dp"
+        android:visibility="gone" />
 
-    > <!-- Nền tối cho hợp theme -->
-
-    <!-- Ảnh bài hát -->
-    <ImageView
-        android:id="@+id/imgAnhBaiHat"
+    <!-- 2. Ảnh bài hát -->
+    <androidx.cardview.widget.CardView
         android:layout_width="60dp"
         android:layout_height="60dp"
-        android:scaleType="centerCrop"
-        android:src="@drawable/album" /> <!-- Thay @drawable/album bằng ảnh mặc định của bạn -->
+        app:cardCornerRadius="10dp"
+        app:cardElevation="0dp">
 
-    <!-- Thông tin bài hát -->
+        <ImageView
+            android:id="@+id/imgAnhBaiHat"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@drawable/user" />
+    </androidx.cardview.widget.CardView>
+
+    <!-- 3. Thông tin bài hát -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:layout_marginLeft="15dp"
+        android:layout_marginStart="15dp"
         android:orientation="vertical">
 
         <TextView
             android:id="@+id/tvTenBaiHat"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Tên Bài Hát"
+            android:text="Tên bài hát"
             android:textColor="#FFFFFF"
             android:textSize="16sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:ellipsize="end"
+            android:maxLines="1"/>
 
         <TextView
             android:id="@+id/tvTenCaSi"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Ca Sĩ"
-            android:textColor="#B3B3B3"
+            android:text="Tên ca sĩ"
+            android:textColor="#AAAAAA"
             android:textSize="14sp" />
     </LinearLayout>
 
+    <!-- 4. Nút Tim -->
     <ImageView
-        android:id="@+id/btnChonAnh"
+        android:id="@+id/btnLove"
         android:layout_width="30dp"
         android:layout_height="30dp"
-        android:padding="5dp"
         android:src="@drawable/not_like"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Thêm vào yêu thích"
-        android:layout_marginRight="5dp"/>
+        android:padding="5dp"/>
 
 </LinearLayout>

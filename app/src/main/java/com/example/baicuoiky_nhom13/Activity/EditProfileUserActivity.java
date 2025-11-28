@@ -1,8 +1,7 @@
 package com.example.baicuoiky_nhom13.Activity;
 
-import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
+import android.app.ProgressDialog;
+import android.os.Bundle;import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -15,6 +14,7 @@ import com.example.baicuoiky_nhom13.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,8 +50,9 @@ public class EditProfileUserActivity extends AppCompatActivity {
         }
 
         currentEmail = currentUser.getEmail();
+        edtEmail.setText(currentEmail); // Set email ngay lập tức
 
-        // 4. Load dữ liệu cũ
+        // 4. Load dữ liệu cũ (QUAN TRỌNG)
         loadCurrentData();
 
         // 5. Xử lý sự kiện
@@ -60,48 +61,44 @@ public class EditProfileUserActivity extends AppCompatActivity {
 
     private void initViews() {
         imgBack = findViewById(R.id.imgBack);
+        // Đảm bảo ID trong XML khớp (xem lại file XML của bạn nếu ID khác)
         imgAnhDaiDien = findViewById(R.id.imgAnhDaiDien);
+
+        // Lưu ý: ID của bạn trong ảnh có thể là edtHoTen, edtPass... hãy kiểm tra kỹ
+        // Ở đây tôi dùng ID tiêu chuẩn, bạn hãy sửa lại trong XML hoặc sửa ở đây cho khớp
         edtTenNguoiDung = findViewById(R.id.edtTenNguoiDung);
         edtMatKhau = findViewById(R.id.edtMatKhau);
         edtEmail = findViewById(R.id.edtEmail);
         btnLuu = findViewById(R.id.btnLuu);
 
-        // --- QUAN TRỌNG: KHÓA KHÔNG CHO SỬA EMAIL ---
+        // Khóa không cho sửa Email
         edtEmail.setEnabled(false);
-        edtEmail.setFocusable(false);
-        edtEmail.setAlpha(0.5f); // Làm mờ để người dùng biết không sửa được
+        edtEmail.setAlpha(0.5f);
     }
 
     private void loadCurrentData() {
-        // Hiển thị email ngay lập tức
-        edtEmail.setText(currentEmail);
-
         if (currentEmail != null) {
             db.collection("NGUOI_DUNG").document(currentEmail)
                     .get()
                     .addOnSuccessListener(documentSnapshot -> {
                         if (documentSnapshot.exists()) {
                             String hoTen = documentSnapshot.getString("hoTen");
-                            String matKhau = documentSnapshot.getString("matKhau");
+                            // Không load mật khẩu lên EditText để bảo mật, hoặc để trống
                             String avatarUrl = documentSnapshot.getString("avatar");
 
                             if (hoTen != null) edtTenNguoiDung.setText(hoTen);
-                            if (matKhau != null) edtMatKhau.setText(matKhau);
 
-                            // Load ảnh nếu có
+                            // Load ảnh
                             if (avatarUrl != null && !avatarUrl.isEmpty()) {
-                                try {
-                                    Glide.with(EditProfileUserActivity.this)
-                                            .load(avatarUrl)
-                                            .placeholder(R.drawable.user)
-                                            .error(R.drawable.user)
-                                            .into(imgAnhDaiDien);
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
+                                Glide.with(this).load(avatarUrl).circleCrop().into(imgAnhDaiDien);
                             }
+                        } else {
+                            // Nếu Document chưa tồn tại (Trường hợp của bạn)
+                            // Tạo sẵn dữ liệu rỗng để tránh lỗi lần sau
+                            Toast.makeText(this, "Hồ sơ chưa có dữ liệu, vui lòng cập nhật!", Toast.LENGTH_SHORT).show();
                         }
-                    });
+                    })
+                    .addOnFailureListener(e -> Log.e("EditProfile", "Lỗi load: " + e.getMessage()));
         }
     }
 
@@ -112,8 +109,8 @@ public class EditProfileUserActivity extends AppCompatActivity {
             String newHoTen = edtTenNguoiDung.getText().toString().trim();
             String newMatKhau = edtMatKhau.getText().toString().trim();
 
-            if (newHoTen.isEmpty() || newMatKhau.isEmpty()) {
-                Toast.makeText(EditProfileUserActivity.this, "Vui lòng nhập đủ thông tin", Toast.LENGTH_SHORT).show();
+            if (newHoTen.isEmpty()) {
+                Toast.makeText(this, "Vui lòng nhập tên hiển thị", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -122,35 +119,40 @@ public class EditProfileUserActivity extends AppCompatActivity {
     }
 
     private void updateProfile(String hoTen, String matKhau) {
-        // Tạo Map dữ liệu để update
+        ProgressDialog pd = new ProgressDialog(this);
+        pd.setMessage("Đang lưu...");
+        pd.show();
+
+        // Tạo Map dữ liệu
         Map<String, Object> userUpdates = new HashMap<>();
         userUpdates.put("hoTen", hoTen);
-        userUpdates.put("matKhau", matKhau);
+        userUpdates.put("email", currentEmail); // Lưu luôn email vào DB cho chắc
+        userUpdates.put("vaiTro", "user"); // Mặc định user thường
 
-        // Cập nhật Firestore
+        // Lưu ý: Không nên lưu mật khẩu vào Firestore (kém bảo mật),
+        // nhưng nếu bài tập yêu cầu hiển thị lại pass cũ thì lưu tạm.
+        if (!matKhau.isEmpty()) {
+            userUpdates.put("matKhau", matKhau);
+        }
+
+        // QUAN TRỌNG: Dùng set(..., SetOptions.merge()) để nếu chưa có doc thì nó tự tạo
         db.collection("NGUOI_DUNG").document(currentEmail)
-                .update(userUpdates)
+                .set(userUpdates, SetOptions.merge())
                 .addOnSuccessListener(aVoid -> {
 
-                    // Cập nhật mật khẩu trên Authentication (Quan trọng)
-                    FirebaseUser user = mAuth.getCurrentUser();
-                    if (user != null) {
-                        user.updatePassword(matKhau)
-                                .addOnCompleteListener(task -> {
-                                    if (task.isSuccessful()) {
-                                        Toast.makeText(EditProfileUserActivity.this, "Cập nhật thành công!", Toast.LENGTH_SHORT).show();
-                                        finish(); // Quay về màn hình Profile
-                                    } else {
-                                        Toast.makeText(EditProfileUserActivity.this, "Đã lưu thông tin, nhưng lỗi đổi mật khẩu (cần đăng nhập lại).", Toast.LENGTH_LONG).show();
-                                        finish();
-                                    }
-                                });
-                    } else {
-                        finish();
+                    // Nếu có đổi pass auth
+                    if (!matKhau.isEmpty()) {
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if(user != null) user.updatePassword(matKhau);
                     }
+
+                    pd.dismiss();
+                    Toast.makeText(this, "Cập nhật thành công!", Toast.LENGTH_SHORT).show();
+                    finish();
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(EditProfileUserActivity.this, "Lỗi cập nhật: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    pd.dismiss();
+                    Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 }

@@ -42,6 +42,7 @@ public class BangXepHangActivity extends AppCompatActivity {
 
         // Tái sử dụng Adapter cũ để hiển thị danh sách
         adapter = new BaiHatAdapter(this, R.layout.item_baihat, listTopBaiHat, userId);
+        adapter.setRanking(true);
         lvBangXepHang.setAdapter(adapter);
 
         imgBack.setOnClickListener(v -> finish());
