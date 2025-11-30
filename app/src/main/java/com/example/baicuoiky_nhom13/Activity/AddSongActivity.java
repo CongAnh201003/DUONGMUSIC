@@ -66,9 +66,9 @@ public class AddSongActivity extends AppCompatActivity {
         try {
             Map config = new HashMap();
             // TODO: THAY ĐỔI THÔNG TIN CỦA BẠN VÀO ĐÂY
-            config.put("cloud_name", "do5bptf2g");
-            config.put("api_key", "824931231479934");
-            config.put("api_secret", "CQiPu_nEy-DLjM77lr-STNReODU");
+            config.put("cloud_name", "dhdfyfzej");
+            config.put("api_key", "933946823114623");
+            config.put("api_secret", "TDeurhfnQZ-06m7MBBtMeMM-ArE");
 
             MediaManager.init(this, config);
         } catch (Exception e) {

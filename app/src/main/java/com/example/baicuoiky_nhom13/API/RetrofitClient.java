@@ -6,7 +6,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class RetrofitClient {
 
     // URL gốc của Cloudinary API
-    private static final String BASE_URL = "https://api.cloudinary.com/v1_1/do5bptf2g/";
+    private static final String BASE_URL = "https://api.cloudinary.com/v1_1/dhdfyfzej/";
 
     private static Retrofit retrofit = null;
 
